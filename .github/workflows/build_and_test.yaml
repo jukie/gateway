@@ -75,10 +75,10 @@ jobs:
       env:
         KIND_NODE_TAG: ${{ matrix.version }}
         IMAGE_PULL_POLICY: IfNotPresent
-        CONFORMANCE_REPORT_PATH: non-experimental.yaml
+        CONFORMANCE_REPORT_PATH: /home/runner/work/gateway/gateway/non-experimental.yaml
       run: |
         make conformance
-        cat non-experimental.yaml
+        cat /home/runner/work/gateway/gateway/non-experimental.yaml
 
   conformance-experimental-test:
     runs-on: ubuntu-latest
@@ -107,10 +107,10 @@ jobs:
       env:
         KIND_NODE_TAG: ${{ matrix.version }}
         IMAGE_PULL_POLICY: IfNotPresent
-        CONFORMANCE_REPORT_PATH: experimental.yaml
+        CONFORMANCE_REPORT_PATH: /home/runner/work/gateway/gateway/experimental.yaml
       run: |
         make experimental-conformance
-        cat experimental.yaml
+        cat /home/runner/work/gateway/gateway/experimental.yaml
 
   e2e-test:
     runs-on: ubuntu-latest
