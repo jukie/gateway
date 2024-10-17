@@ -106,7 +106,42 @@ jobs:
       env:
         KIND_NODE_TAG: ${{ matrix.version }}
         IMAGE_PULL_POLICY: IfNotPresent
-      run: make conformance
+        CONFORMANCE_REPORT_PATH: non-experimental.yaml
+      run: |
+        make conformance
+        cat non-experimental.yaml
+
+  conformance-experimental-test:
+    runs-on: ubuntu-latest
+    needs: [build]
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [ v1.28.13, v1.29.8, v1.30.4, v1.31.0 ]
+    steps:
+    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # v4.2.1
+    - uses: ./tools/github-actions/setup-deps
+
+    - name: Download EG Binaries
+      uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+      with:
+        name: envoy-gateway
+        path: bin/
+
+    - name: Give Privileges To EG Binaries
+      run: |
+        chmod +x bin/linux/amd64/envoy-gateway
+        chmod +x bin/linux/arm64/envoy-gateway
+
+    # conformance
+    - name: Run Experimental Conformance Tests
+      env:
+        KIND_NODE_TAG: ${{ matrix.version }}
+        IMAGE_PULL_POLICY: IfNotPresent
+        CONFORMANCE_REPORT_PATH: experimental.yaml
+      run: |
+        make experimental-conformance
+        cat experimental.yaml
 
   e2e-test:
     runs-on: ubuntu-latest
