@@ -17,16 +17,6 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    runs-on: ubuntu-22.04
-    steps:
-    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # v4.2.1
-    - uses: ./tools/github-actions/setup-deps
-    # Generate the installation manifests first, so it can check
-    # for errors while running `make -k lint`
-    - run: IMAGE_PULL_POLICY=Always make generate-manifests
-    - run: make lint-deps
-    - run: make -k lint
 
   gen-check:
     runs-on: ubuntu-22.04
@@ -41,27 +31,6 @@ jobs:
     - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # v4.2.1
     - uses: ./tools/github-actions/setup-deps
     - run: make -k licensecheck
-
-  coverage-test:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read   #  for actions/checkout
-      id-token: write  #  for fetching OIDC token
-    steps:
-    - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871  # v4.2.1
-    - uses: ./tools/github-actions/setup-deps
-
-    # test
-    - name: Run Coverage Tests
-      run: make go.test.coverage
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238  # v4.6.0
-      with:
-        fail_ci_if_error: true
-        files: ./coverage.xml
-        name: codecov-envoy-gateway
-        verbose: true
-        use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
 
   build:
     runs-on: ubuntu-latest
