@@ -167,6 +167,9 @@ func (t *Translator) Translate(resources *resource.Resources) (*TranslateResult,
 	// Build IR maps.
 	xdsIR, infraIR := t.InitIRs(acceptedGateways)
 
+	// Process Cluster for EnvoyProxy service
+	t.ProcessProxyCluster(acceptedGateways, resources, xdsIR, infraIR)
+
 	// Process all Listeners for all relevant Gateways.
 	t.ProcessListeners(acceptedGateways, xdsIR, infraIR, resources)
 

@@ -234,6 +234,8 @@ infraIR:
     proxy:
       listeners:
       - address: null
+        name: ""
+      - address: null
         name: envoy-gateway/gateway-btls/http
         ports:
         - containerPort: 10080
@@ -248,6 +250,8 @@ infraIR:
   envoy-gateway/gateway-btls2:
     proxy:
       listeners:
+      - address: null
+        name: ""
       - address: null
         name: envoy-gateway/gateway-btls2/http
         ports:

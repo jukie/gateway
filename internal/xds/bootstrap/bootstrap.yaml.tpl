@@ -207,6 +207,11 @@ static_resources:
               path_config_source:
                 path: {{ .SdsTrustedCAPath }}
               resource_api_version: V3
+  - connect_timeout: 10s
+    load_assignment:
+      cluster_name: {{ .LocalServiceCluster.Name }}
+    name: {{ .LocalServiceCluster.Name }}
+    type: EDS
   - name: wasm_cluster
     type: STRICT_DNS
     connect_timeout: 10s

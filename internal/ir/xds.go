@@ -150,6 +150,16 @@ type Xds struct {
 	EnvoyPatchPolicies []*EnvoyPatchPolicy `json:"envoyPatchPolicies,omitempty" yaml:"envoyPatchPolicies,omitempty"`
 	// FilterOrder holds the custom order of the HTTP filters
 	FilterOrder []egv1a1.FilterPosition `json:"filterOrder,omitempty" yaml:"filterOrder,omitempty"`
+	// LocalServiceCluster holds the local cluster of EnvoyProxy instances
+	LocalServiceCluster *LocalServiceCluster `json:"proxyCluster,omitempty" yaml:"proxyCluster,omitempty"`
+}
+
+// LocalServiceCluster holds the local cluster of EnvoyProxy instances
+// +k8s:deepcopy-gen=true
+type LocalServiceCluster struct {
+	Name        string              `json:"name"`
+	Destination *DestinationSetting `json:"destination,omitempty"`
+	Traffic     *TrafficFeatures    `json:"traffic,omitempty"`
 }
 
 // Equal implements the Comparable interface used by watchable.DeepEqual to skip unnecessary updates.

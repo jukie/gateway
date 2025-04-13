@@ -167,6 +167,14 @@
                 {
                   "connectTimeout": "10s",
                   "loadAssignment": {
+                    "clusterName": "local_cluster"
+                  },
+                  "name": "local_cluster",
+                  "type": "EDS"
+                },
+                {
+                  "connectTimeout": "10s",
+                  "loadAssignment": {
                     "clusterName": "wasm_cluster",
                     "endpoints": [
                       {

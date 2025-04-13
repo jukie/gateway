@@ -433,6 +433,8 @@ infraIR:
     proxy:
       listeners:
       - address: null
+        name: ""
+      - address: null
         name: envoy-gateway/gateway-1/http
         ports:
         - containerPort: 10080
@@ -447,6 +449,8 @@ infraIR:
   envoy-gateway/gateway-2:
     proxy:
       listeners:
+      - address: null
+        name: ""
       - address: null
         name: envoy-gateway/gateway-2/http
         ports:
@@ -470,6 +474,8 @@ infraIR:
     proxy:
       listeners:
       - address: null
+        name: ""
+      - address: null
         name: envoy-gateway/gateway-3/bar-foo
         ports:
         - containerPort: 10080
@@ -484,6 +490,8 @@ infraIR:
   not-same-namespace/not-same-namespace-gateway:
     proxy:
       listeners:
+      - address: null
+        name: ""
       - address: null
         name: not-same-namespace/not-same-namespace-gateway/http
         ports:
@@ -516,6 +524,15 @@ xdsIR:
         escapedSlashesAction: UnescapeAndRedirect
         mergeSlashes: true
       port: 10080
+    proxyCluster:
+      destination:
+        addressType: IP
+        endpoints:
+        - host: 8.7.6.5
+          port: 10080
+        name: proxy-cluster-0
+        protocol: HTTP
+      name: envoy-gateway-gateway-1-196ae069
     readyListener:
       address: 0.0.0.0
       ipFamily: IPv4
@@ -592,6 +609,15 @@ xdsIR:
         escapedSlashesAction: UnescapeAndRedirect
         mergeSlashes: true
       port: 10080
+    proxyCluster:
+      destination:
+        addressType: IP
+        endpoints:
+        - host: 8.7.6.5
+          port: 10080
+        name: proxy-cluster-3
+        protocol: HTTP
+      name: not-same-namespace-not-same-namespace-gateway-f21c7840
     readyListener:
       address: 0.0.0.0
       ipFamily: IPv4

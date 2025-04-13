@@ -216,6 +216,8 @@ infraIR:
     proxy:
       listeners:
       - address: null
+        name: ""
+      - address: null
         name: default/tcp-gateway/foo
         ports:
         - containerPort: 8162

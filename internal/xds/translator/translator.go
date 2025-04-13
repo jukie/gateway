@@ -123,6 +123,10 @@ func (t *Translator) Translate(xdsIR *ir.Xds) (*types.ResourceVersionTable, erro
 		errs = errors.Join(errs, err)
 	}
 
+	if err := processLocalServiceCluster(tCtx, xdsIR.LocalServiceCluster); err != nil {
+		errs = errors.Join(errs, err)
+	}
+
 	// Check if an extension want to inject any clusters/secrets
 	// If no extension exists (or it doesn't subscribe to this hook) then this is a quick no-op
 	if err := processExtensionPostTranslationHook(tCtx, t.ExtensionManager); err != nil {
@@ -864,6 +868,36 @@ func processUDPListenerXdsTranslation(
 		}
 	}
 	return errs
+}
+
+func processLocalServiceCluster(tCtx *types.ResourceVersionTable, localServiceCluster *ir.LocalServiceCluster) error {
+	if localServiceCluster == nil {
+		return nil
+	}
+	traffic := localServiceCluster.Traffic
+	// Make sure that there are safe defaults for the traffic
+	if traffic == nil {
+		traffic = &ir.TrafficFeatures{}
+	}
+	return addXdsCluster(tCtx, &xdsClusterArgs{
+		name:              localServiceCluster.Destination.Name,
+		settings:          []*ir.DestinationSetting{localServiceCluster.Destination},
+		tSocket:           nil,
+		endpointType:      EndpointTypeStatic,
+		loadBalancer:      traffic.LoadBalancer,
+		proxyProtocol:     traffic.ProxyProtocol,
+		circuitBreaker:    traffic.CircuitBreaker,
+		healthCheck:       traffic.HealthCheck,
+		http1Settings:     nil,
+		http2Settings:     traffic.HTTP2,
+		timeout:           traffic.Timeout,
+		tcpkeepalive:      traffic.TCPKeepalive,
+		metrics:           nil,
+		backendConnection: traffic.BackendConnection,
+		dns:               traffic.DNS,
+		useClientProtocol: false,
+		ipFamily:          nil,
+	})
 }
 
 // findXdsListenerByHostPort finds a xds listener with the same address, port and protocol, and returns nil if there is no match.

@@ -95,6 +95,11 @@ static_resources:
               timeout: 5s
   - connect_timeout: 10s
     load_assignment:
+      cluster_name: local_cluster
+    name: local_cluster
+    type: EDS
+  - connect_timeout: 10s
+    load_assignment:
       cluster_name: wasm_cluster
       endpoints:
       - lb_endpoints:

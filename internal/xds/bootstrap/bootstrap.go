@@ -49,6 +49,8 @@ const (
 
 	defaultSdsTrustedCAPath   = "/sds/xds-trusted-ca.json"
 	defaultSdsCertificatePath = "/sds/xds-certificate.json"
+
+	defaultLocalServiceClusterName = "local_cluster"
 )
 
 //go:embed bootstrap.yaml.tpl
@@ -79,6 +81,8 @@ type bootstrapParameters struct {
 	// SdsTrustedCAPath defines the path to SDS trusted CA config.
 	SdsTrustedCAPath string
 
+	LocalServiceCluster localServiceCluster
+
 	// EnablePrometheus defines whether to enable metrics endpoint for prometheus.
 	EnablePrometheus bool
 	// EnablePrometheusCompression defines whether to enable HTTP compression on metrics endpoint for prometheus.
@@ -106,6 +110,10 @@ type serverParameters struct {
 	Address string
 	// Port is the port of the XDS Server that Envoy is managed by.
 	Port int32
+}
+
+type localServiceCluster struct {
+	Name string
 }
 
 type metricSink struct {
@@ -136,15 +144,16 @@ type overloadManagerParameters struct {
 }
 
 type RenderBootstrapConfigOptions struct {
-	IPFamily         *egv1a1.IPFamily
-	ProxyMetrics     *egv1a1.ProxyMetrics
-	SdsConfig        SdsConfigPath
-	XdsServerHost    *string
-	XdsServerPort    *int32
-	WasmServerPort   *int32
-	AdminServerPort  *int32
-	StatsServerPort  *int32
-	MaxHeapSizeBytes uint64
+	IPFamily                *egv1a1.IPFamily
+	ProxyMetrics            *egv1a1.ProxyMetrics
+	SdsConfig               SdsConfigPath
+	XdsServerHost           *string
+	XdsServerPort           *int32
+	WasmServerPort          *int32
+	AdminServerPort         *int32
+	StatsServerPort         *int32
+	MaxHeapSizeBytes        uint64
+	LocalServiceClusterName *string
 }
 
 type SdsConfigPath struct {
@@ -256,6 +265,9 @@ func GetRenderedBootstrapConfig(opts *RenderBootstrapConfigOptions) (string, err
 				Address: netutils.IPv4ListenerAddress,
 				Port:    EnvoyStatsPort,
 			},
+			LocalServiceCluster: localServiceCluster{
+				Name: defaultLocalServiceClusterName,
+			},
 			SdsCertificatePath:           defaultSdsCertificatePath,
 			SdsTrustedCAPath:             defaultSdsTrustedCAPath,
 			EnablePrometheus:             enablePrometheus,
@@ -295,6 +307,9 @@ func GetRenderedBootstrapConfig(opts *RenderBootstrapConfigOptions) (string, err
 		}
 		if opts.WasmServerPort != nil {
 			cfg.parameters.WasmServer.Port = *opts.WasmServerPort
+		}
+		if opts.LocalServiceClusterName != nil {
+			cfg.parameters.LocalServiceCluster.Name = *opts.LocalServiceClusterName
 		}
 
 		if opts.IPFamily != nil {

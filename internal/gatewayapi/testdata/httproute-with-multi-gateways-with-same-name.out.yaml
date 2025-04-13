@@ -117,6 +117,8 @@ infraIR:
     proxy:
       listeners:
       - address: null
+        name: ""
+      - address: null
         name: default/gateway-1/http
         ports:
         - containerPort: 10080
@@ -131,6 +133,8 @@ infraIR:
   envoy-gateway/gateway-1:
     proxy:
       listeners:
+      - address: null
+        name: ""
       - address: null
         name: envoy-gateway/gateway-1/http
         ports:

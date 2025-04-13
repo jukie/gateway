@@ -292,6 +292,177 @@ func TestTranslate(t *testing.T) {
 				},
 			)
 
+			labels := map[string]string{}
+			if translator.MergeGateways {
+				labels[OwningGatewayClassLabel] = string(translator.GatewayClassName)
+				// add local proxy service
+				resources.Services = append(resources.Services,
+					&corev1.Service{
+						ObjectMeta: metav1.ObjectMeta{
+							Namespace: translator.Namespace,
+							Name:      "proxy-cluster",
+							Labels:    labels,
+						},
+						Spec: corev1.ServiceSpec{
+							ClusterIP: "10.10.1.10",
+							Ports: []corev1.ServicePort{
+								{
+									Name:        "http",
+									Port:        10080,
+									TargetPort:  intstr.IntOrString{IntVal: 10080},
+									Protocol:    corev1.ProtocolTCP,
+									AppProtocol: ptr.To("http"),
+								},
+							},
+						},
+					},
+				)
+				resources.EndpointSlices = append(resources.EndpointSlices,
+					&discoveryv1.EndpointSlice{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "proxy-cluster-endpointslice",
+							Namespace: translator.Namespace,
+							Labels: map[string]string{
+								discoveryv1.LabelServiceName: "proxy-cluster",
+								OwningGatewayClassLabel:      string(translator.GatewayClassName),
+							},
+						},
+						AddressType: discoveryv1.AddressTypeIPv4,
+						Ports: []discoveryv1.EndpointPort{
+							{
+								Name:     ptr.To("http"),
+								Port:     ptr.To[int32](10080),
+								Protocol: ptr.To(corev1.ProtocolTCP),
+							},
+						},
+						Endpoints: []discoveryv1.Endpoint{
+							{
+								Addresses: []string{
+									"8.7.6.5",
+								},
+								Conditions: discoveryv1.EndpointConditions{
+									Ready: ptr.To(true),
+								},
+							},
+						},
+					},
+				)
+
+			} else {
+				// labels[OwningGatewayNameLabel] = string(resources.Gateways[0].Labels[OwningGatewayNameLabel])
+				for i, g := range resources.Gateways {
+					t.Logf("making a gateway %s %s", g.Name, translator.Namespace)
+					resources.Services = append(resources.Services,
+						&corev1.Service{
+							ObjectMeta: metav1.ObjectMeta{
+								Namespace: translator.Namespace,
+								Name:      fmt.Sprintf("proxy-cluster-%v", i),
+								Labels:    map[string]string{OwningGatewayNameLabel: g.Name},
+							},
+							Spec: corev1.ServiceSpec{
+								ClusterIP: fmt.Sprintf("10.10.10.%v", strconv.Itoa(i)),
+								Ports: []corev1.ServicePort{
+									{
+										Name:        "http",
+										Port:        10080,
+										TargetPort:  intstr.IntOrString{IntVal: 10080},
+										Protocol:    corev1.ProtocolTCP,
+										AppProtocol: ptr.To("http"),
+									},
+								},
+							},
+						},
+					)
+					resources.EndpointSlices = append(resources.EndpointSlices,
+						&discoveryv1.EndpointSlice{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      fmt.Sprintf("proxy-cluster-%v-endpointslice", i),
+								Namespace: translator.Namespace,
+								Labels: map[string]string{
+									discoveryv1.LabelServiceName: fmt.Sprintf("proxy-cluster-%v", i),
+									OwningGatewayClassLabel:      string(translator.GatewayClassName),
+								},
+							},
+							AddressType: discoveryv1.AddressTypeIPv4,
+							Ports: []discoveryv1.EndpointPort{
+								{
+									Name:     ptr.To("http"),
+									Port:     ptr.To[int32](10080),
+									Protocol: ptr.To(corev1.ProtocolTCP),
+								},
+							},
+							Endpoints: []discoveryv1.Endpoint{
+								{
+									Addresses: []string{
+										"8.7.6.5",
+									},
+									Conditions: discoveryv1.EndpointConditions{
+										Ready: ptr.To(true),
+									},
+								},
+							},
+						},
+					)
+				}
+			}
+
+			// add local proxy service
+			resources.Services = append(resources.Services,
+				&corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: translator.Namespace,
+						Name:      "proxy-cluster",
+						Labels:    labels,
+					},
+					Spec: corev1.ServiceSpec{
+						ClusterIP: "10.10.10.10",
+						Ports: []corev1.ServicePort{
+							{
+								Name:        "http",
+								Port:        10081,
+								TargetPort:  intstr.IntOrString{IntVal: 10081},
+								Protocol:    corev1.ProtocolTCP,
+								AppProtocol: ptr.To("http"),
+							},
+						},
+					},
+				},
+			)
+			resources.EndpointSlices = append(resources.EndpointSlices,
+				&discoveryv1.EndpointSlice{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "otel-collector-endpointslice",
+						Namespace: "monitoring",
+						Labels: map[string]string{
+							discoveryv1.LabelServiceName: "otel-collector",
+						},
+					},
+					AddressType: discoveryv1.AddressTypeIPv4,
+					Ports: []discoveryv1.EndpointPort{
+						{
+							Name:     ptr.To("grpc"),
+							Port:     ptr.To[int32](4317),
+							Protocol: ptr.To(corev1.ProtocolTCP),
+						},
+						{
+							Name:     ptr.To("zipkin"),
+							Port:     ptr.To[int32](9411),
+							Protocol: ptr.To(corev1.ProtocolTCP),
+						},
+					},
+					Endpoints: []discoveryv1.Endpoint{
+						{
+							Addresses: []string{
+								"8.7.6.5",
+							},
+							Conditions: discoveryv1.EndpointConditions{
+								Ready: ptr.To(true),
+							},
+						},
+					},
+				},
+			)
+
 			resources.Namespaces = append(resources.Namespaces, &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "envoy-gateway",
@@ -868,25 +1039,27 @@ func (m *mockWasmCache) Cleanup() {}
 // This allows us to use cmp.Diff to compare the types with field-level cmpopts.
 func xdsWithoutEqual(a *ir.Xds) any {
 	ret := struct {
-		ReadyListener      *ir.ReadyListener
-		AccessLog          *ir.AccessLog
-		Tracing            *ir.Tracing
-		Metrics            *ir.Metrics
-		HTTP               []*ir.HTTPListener
-		TCP                []*ir.TCPListener
-		UDP                []*ir.UDPListener
-		EnvoyPatchPolicies []*ir.EnvoyPatchPolicy
-		FilterOrder        []egv1a1.FilterPosition
+		ReadyListener       *ir.ReadyListener
+		AccessLog           *ir.AccessLog
+		Tracing             *ir.Tracing
+		Metrics             *ir.Metrics
+		LocalServiceCluster *ir.LocalServiceCluster
+		HTTP                []*ir.HTTPListener
+		TCP                 []*ir.TCPListener
+		UDP                 []*ir.UDPListener
+		EnvoyPatchPolicies  []*ir.EnvoyPatchPolicy
+		FilterOrder         []egv1a1.FilterPosition
 	}{
-		ReadyListener:      a.ReadyListener,
-		AccessLog:          a.AccessLog,
-		Tracing:            a.Tracing,
-		Metrics:            a.Metrics,
-		HTTP:               a.HTTP,
-		TCP:                a.TCP,
-		UDP:                a.UDP,
-		EnvoyPatchPolicies: a.EnvoyPatchPolicies,
-		FilterOrder:        a.FilterOrder,
+		ReadyListener:       a.ReadyListener,
+		AccessLog:           a.AccessLog,
+		Tracing:             a.Tracing,
+		Metrics:             a.Metrics,
+		LocalServiceCluster: a.LocalServiceCluster,
+		HTTP:                a.HTTP,
+		TCP:                 a.TCP,
+		UDP:                 a.UDP,
+		EnvoyPatchPolicies:  a.EnvoyPatchPolicies,
+		FilterOrder:         a.FilterOrder,
 	}
 
 	// Ensure we didn't drop an exported field.

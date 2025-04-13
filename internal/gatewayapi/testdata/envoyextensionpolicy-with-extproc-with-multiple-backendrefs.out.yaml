@@ -263,6 +263,8 @@ infraIR:
     proxy:
       listeners:
       - address: null
+        name: ""
+      - address: null
         name: default/gateway-1/http
         ports:
         - containerPort: 10080
@@ -381,6 +383,15 @@ xdsIR:
           distinct: false
           name: ""
           prefix: /bar
+    proxyCluster:
+      destination:
+        addressType: IP
+        endpoints:
+        - host: 8.7.6.5
+          port: 10080
+        name: proxy-cluster-0
+        protocol: HTTP
+      name: default-gateway-1-bfd08ef4
     readyListener:
       address: 0.0.0.0
       ipFamily: IPv4

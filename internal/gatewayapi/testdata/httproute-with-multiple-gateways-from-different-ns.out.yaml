@@ -146,6 +146,8 @@ infraIR:
     proxy:
       listeners:
       - address: null
+        name: ""
+      - address: null
         name: default/gateway-a/default
         ports:
         - containerPort: 10080
@@ -160,6 +162,8 @@ infraIR:
   envoy-gateway/gateway-b:
     proxy:
       listeners:
+      - address: null
+        name: ""
       - address: null
         name: envoy-gateway/gateway-b/default
         ports:
@@ -210,6 +214,15 @@ xdsIR:
           distinct: false
           name: ""
           prefix: /toy
+    proxyCluster:
+      destination:
+        addressType: IP
+        endpoints:
+        - host: 8.7.6.5
+          port: 10080
+        name: proxy-cluster-0
+        protocol: HTTP
+      name: default-gateway-a-573db404
     readyListener:
       address: 0.0.0.0
       ipFamily: IPv4

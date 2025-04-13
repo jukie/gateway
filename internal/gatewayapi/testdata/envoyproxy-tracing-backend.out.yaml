@@ -138,6 +138,8 @@ infraIR:
         status: {}
       listeners:
       - address: null
+        name: ""
+      - address: null
         name: envoy-gateway/gateway-1/http
         ports:
         - containerPort: 10080
@@ -180,6 +182,8 @@ xdsIR:
         settings:
         - addressType: IP
           endpoints:
+          - host: 8.7.6.5
+            port: 4317
           - host: 8.7.6.5
             port: 4317
           name: tracing/backend/-1

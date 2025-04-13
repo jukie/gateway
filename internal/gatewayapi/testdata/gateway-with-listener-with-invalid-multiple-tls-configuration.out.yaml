@@ -86,6 +86,9 @@ httpRoutes:
 infraIR:
   envoy-gateway/gateway-1:
     proxy:
+      listeners:
+      - address: null
+        name: ""
       metadata:
         labels:
           gateway.envoyproxy.io/owning-gateway-name: gateway-1

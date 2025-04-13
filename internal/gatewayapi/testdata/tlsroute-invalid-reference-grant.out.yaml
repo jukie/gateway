@@ -46,6 +46,8 @@ infraIR:
     proxy:
       listeners:
       - address: null
+        name: ""
+      - address: null
         name: gateway-conformance-infra/gateway-tlsroute-referencegrant/https
         ports:
         - containerPort: 10443

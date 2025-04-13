@@ -1,0 +1,24 @@
+- clusterName: first-route-dest
+  endpoints:
+  - lbEndpoints:
+    - endpoint:
+        address:
+          socketAddress:
+            address: 1.2.3.4
+            portValue: 50000
+      loadBalancingWeight: 1
+    loadBalancingWeight: 1
+    locality:
+      region: first-route-dest/backend/0
+- clusterName: proxy-cluster-0
+  endpoints:
+  - lbEndpoints:
+    - endpoint:
+        address:
+          socketAddress:
+            address: 8.7.6.5
+            portValue: 10080
+      loadBalancingWeight: 1
+    loadBalancingWeight: 1
+    locality:
+      region: proxy-cluster-0

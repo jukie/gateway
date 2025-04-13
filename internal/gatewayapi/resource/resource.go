@@ -140,6 +140,26 @@ func (r *Resources) GetServiceImport(namespace, name string) *mcsapiv1a1.Service
 	return nil
 }
 
+// GetServiceByLabel returns the Service with the given namespace and labels.
+func (r *Resources) GetServiceByLabel(namespace string, labels map[string]string) *corev1.Service {
+	found := false
+	for _, svc := range r.Services {
+		if svc.Namespace != namespace {
+			continue
+		}
+		for k, v := range labels {
+			if svc.Labels[k] != v {
+				break
+			}
+			found = true
+		}
+		if found {
+			return svc
+		}
+	}
+	return nil
+}
+
 func (r *Resources) GetBackend(namespace, name string) *egv1a1.Backend {
 	for _, be := range r.Backends {
 		if be.Namespace == namespace && be.Name == name {

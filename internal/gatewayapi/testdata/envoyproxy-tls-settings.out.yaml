@@ -169,6 +169,8 @@ infraIR:
         status: {}
       listeners:
       - address: null
+        name: ""
+      - address: null
         name: envoy-gateway/gateway-tls/
         ports:
         - containerPort: 10445
