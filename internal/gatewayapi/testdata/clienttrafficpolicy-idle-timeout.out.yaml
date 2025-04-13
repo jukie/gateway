@@ -104,8 +104,6 @@ infraIR:
     proxy:
       listeners:
       - address: null
-        name: ""
-      - address: null
         name: envoy-gateway/gateway/http-1
         ports:
         - containerPort: 10080
@@ -161,15 +159,6 @@ xdsIR:
         escapedSlashesAction: UnescapeAndRedirect
         mergeSlashes: true
       port: 8080
-    proxyCluster:
-      destination:
-        addressType: IP
-        endpoints:
-        - host: 8.7.6.5
-          port: 10080
-        name: proxy-cluster-0
-        protocol: HTTP
-      name: envoy-gateway-gateway-966d2c13
     readyListener:
       address: 0.0.0.0
       ipFamily: IPv4

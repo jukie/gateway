@@ -447,8 +447,6 @@ infraIR:
     proxy:
       listeners:
       - address: null
-        name: ""
-      - address: null
         name: envoy-gateway/gateway-1/http-1
         ports:
         - containerPort: 10443
@@ -471,8 +469,6 @@ infraIR:
     proxy:
       listeners:
       - address: null
-        name: ""
-      - address: null
         name: envoy-gateway/gateway-2/http-1
         ports:
         - containerPort: 10443
@@ -487,8 +483,6 @@ infraIR:
   envoy-gateway/gateway-3:
     proxy:
       listeners:
-      - address: null
-        name: ""
       - address: null
         name: envoy-gateway/gateway-3/http-1
         ports:
@@ -505,8 +499,6 @@ infraIR:
     proxy:
       listeners:
       - address: null
-        name: ""
-      - address: null
         name: envoy-gateway/gateway-4/http-1
         ports:
         - containerPort: 10443
@@ -521,8 +513,6 @@ infraIR:
   envoy-gateway/gateway-5:
     proxy:
       listeners:
-      - address: null
-        name: ""
       - address: null
         name: envoy-gateway/gateway-5/http-1
         ports:
@@ -589,6 +579,16 @@ xdsIR:
         escapedSlashesAction: UnescapeAndRedirect
         mergeSlashes: true
       port: 8080
+    proxyCluster:
+      destination:
+        addressType: IP
+        endpoints:
+        - host: 8.7.6.5
+          port: 10080
+        name: proxy-cluster-0
+        protocol: HTTP
+        zoneAwareRoutingEnabled: true
+      name: envoy-gateway-gateway-1-196ae069
     readyListener:
       address: 0.0.0.0
       ipFamily: IPv4
@@ -629,6 +629,16 @@ xdsIR:
         maxVersion: "1.3"
         minVersion: "1.2"
         requireClientCertificate: true
+    proxyCluster:
+      destination:
+        addressType: IP
+        endpoints:
+        - host: 8.7.6.5
+          port: 10080
+        name: proxy-cluster-1
+        protocol: HTTP
+        zoneAwareRoutingEnabled: true
+      name: envoy-gateway-gateway-2-4a0e4eb9
     readyListener:
       address: 0.0.0.0
       ipFamily: IPv4

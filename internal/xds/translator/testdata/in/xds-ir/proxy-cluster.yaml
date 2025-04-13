@@ -7,6 +7,7 @@ proxyCluster:
         port: 10080
     name: proxy-cluster-0
     protocol: HTTP
+    zoneAwareRoutingEnabled: true
   name: proxy-cluster-0
 http:
   - name: "first-listener"

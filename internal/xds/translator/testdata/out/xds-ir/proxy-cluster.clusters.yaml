@@ -40,7 +40,9 @@
         typedConfig:
           '@type': type.googleapis.com/envoy.extensions.load_balancing_policies.least_request.v3.LeastRequest
           localityLbConfig:
-            localityWeightedLbConfig: {}
+            zoneAwareLbConfig:
+              forceLocalityDirectRouting: true
+              minClusterSize: "1"
   name: proxy-cluster-0
   perConnectionBufferLimitBytes: 32768
   type: EDS

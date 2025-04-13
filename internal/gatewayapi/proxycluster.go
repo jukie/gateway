@@ -44,7 +44,7 @@ func (t *Translator) processEnvoyServiceDestinationSetting(
 		Protocol:                ir.HTTP,
 		Endpoints:               endpoints,
 		AddressType:             addrType,
-		ZoneAwareRoutingEnabled: isZoneAwareRoutingEnabled(service),
+		ZoneAwareRoutingEnabled: true,
 	}
 }
 

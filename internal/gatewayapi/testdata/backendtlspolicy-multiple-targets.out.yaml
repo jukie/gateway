@@ -157,8 +157,6 @@ infraIR:
     proxy:
       listeners:
       - address: null
-        name: ""
-      - address: null
         name: envoy-gateway/gateway-btls/http
         ports:
         - containerPort: 10080
@@ -241,6 +239,16 @@ xdsIR:
           distinct: false
           exact: /exact-2
           name: ""
+    proxyCluster:
+      destination:
+        addressType: IP
+        endpoints:
+        - host: 8.7.6.5
+          port: 10080
+        name: proxy-cluster-0
+        protocol: HTTP
+        zoneAwareRoutingEnabled: true
+      name: envoy-gateway-gateway-btls-a945b5bb
     readyListener:
       address: 0.0.0.0
       ipFamily: IPv4

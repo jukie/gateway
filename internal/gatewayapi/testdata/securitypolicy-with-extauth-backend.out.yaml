@@ -239,8 +239,6 @@ infraIR:
     proxy:
       listeners:
       - address: null
-        name: ""
-      - address: null
         name: default/gateway-1/http
         ports:
         - containerPort: 10080
@@ -550,6 +548,16 @@ xdsIR:
                   weight: 1
               path: ""
             name: securitypolicy/default/policy-for-http-route-3-http-backendref
+    proxyCluster:
+      destination:
+        addressType: IP
+        endpoints:
+        - host: 8.7.6.5
+          port: 10080
+        name: proxy-cluster-0
+        protocol: HTTP
+        zoneAwareRoutingEnabled: true
+      name: default-gateway-1-bfd08ef4
     readyListener:
       address: 0.0.0.0
       ipFamily: IPv4

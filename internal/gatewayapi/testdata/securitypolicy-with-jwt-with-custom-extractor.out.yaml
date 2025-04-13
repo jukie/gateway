@@ -157,8 +157,6 @@ infraIR:
     proxy:
       listeners:
       - address: null
-        name: ""
-      - address: null
         name: envoy-gateway/gateway-1/http
         ports:
         - containerPort: 10080
@@ -173,8 +171,6 @@ infraIR:
   envoy-gateway/gateway-2:
     proxy:
       listeners:
-      - address: null
-        name: ""
       - address: null
         name: envoy-gateway/gateway-2/http
         ports:
@@ -337,15 +333,6 @@ xdsIR:
               name: example2
               remoteJWKS:
                 uri: https://two.example.com/jwt/public-key/jwks.json
-    proxyCluster:
-      destination:
-        addressType: IP
-        endpoints:
-        - host: 8.7.6.5
-          port: 10080
-        name: proxy-cluster-0
-        protocol: HTTP
-      name: envoy-gateway-gateway-1-196ae069
     readyListener:
       address: 0.0.0.0
       ipFamily: IPv4
@@ -412,15 +399,6 @@ xdsIR:
               name: example3
               remoteJWKS:
                 uri: https://three.example.com/jwt/public-key/jwks.json
-    proxyCluster:
-      destination:
-        addressType: IP
-        endpoints:
-        - host: 8.7.6.5
-          port: 10080
-        name: proxy-cluster-1
-        protocol: HTTP
-      name: envoy-gateway-gateway-2-4a0e4eb9
     readyListener:
       address: 0.0.0.0
       ipFamily: IPv4

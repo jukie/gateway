@@ -112,8 +112,6 @@ infraIR:
     proxy:
       listeners:
       - address: null
-        name: ""
-      - address: null
         http3:
           quicPort: 443
         name: envoy-gateway/gateway-1/tls

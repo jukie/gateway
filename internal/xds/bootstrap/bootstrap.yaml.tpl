@@ -208,8 +208,22 @@ static_resources:
                 path: {{ .SdsTrustedCAPath }}
               resource_api_version: V3
   - connect_timeout: 10s
+    edsClusterConfig:
+      edsConfig:
+        ads: {}
+        resourceApiVersion: V3
+      serviceName: {{ .LocalServiceCluster.Name }}
     load_assignment:
       cluster_name: {{ .LocalServiceCluster.Name }}
+    loadBalancingPolicy:
+      policies:
+      - typedExtensionConfig:
+          name: envoy.load_balancing_policies.least_request
+          typedConfig:
+            '@type': type.googleapis.com/envoy.extensions.load_balancing_policies.least_request.v3.LeastRequest
+            localityLbConfig:
+              zoneAwareLbConfig:
+                minClusterSize: "1"
     name: {{ .LocalServiceCluster.Name }}
     type: EDS
   - name: wasm_cluster

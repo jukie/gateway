@@ -94,8 +94,21 @@ static_resources:
               interval: 30s
               timeout: 5s
   - connect_timeout: 10s
+    edsClusterConfig:
+      edsConfig:
+        ads: {}
+        resourceApiVersion: V3
+      serviceName: local_cluster
     load_assignment:
       cluster_name: local_cluster
+    loadBalancingPolicy:
+      policies:
+      - typedExtensionConfig:
+          name: envoy.load_balancing_policies.least_request
+          typedConfig:
+            '@type': type.googleapis.com/envoy.extensions.load_balancing_policies.least_request.v3.LeastRequest
+            localityLbConfig:
+              localityWeightedLbConfig: {}
     name: local_cluster
     type: EDS
   - connect_timeout: 10s

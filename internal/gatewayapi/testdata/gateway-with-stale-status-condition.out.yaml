@@ -85,8 +85,6 @@ infraIR:
     proxy:
       listeners:
       - address: null
-        name: ""
-      - address: null
         name: default/gateway-1/https
         ports:
         - containerPort: 10443
@@ -154,6 +152,7 @@ xdsIR:
           port: 10080
         name: proxy-cluster-0
         protocol: HTTP
+        zoneAwareRoutingEnabled: true
       name: default-gateway-1-bfd08ef4
     readyListener:
       address: 0.0.0.0
