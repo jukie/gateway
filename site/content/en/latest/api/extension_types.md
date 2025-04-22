@@ -185,6 +185,25 @@ _Appears in:_
 | `GRPC` | ActiveHealthCheckerTypeGRPC defines the GRPC type of health checking.<br /> | 
 
 
+#### AdmissionControl
+
+
+
+
+
+_Appears in:_
+- [BackendTrafficPolicySpec](#backendtrafficpolicyspec)
+
+| Field | Type | Required | Default | Description |
+| ---   | ---  | ---      | ---     | ---         |
+| `samplingWindow` | _[Duration](#duration)_ |  true  |  |  |
+| `srThreshold` | _float_ |  false  |  | Dictates the success rate at which the rejection probability is non-zero.<br />As success rate drops below this threshold, rejection probability will increase.<br />Any success rate above the threshold results in a rejection probability of 0.<br />Defaults to 95%. |
+| `agression` | _float_ |  false  |  | Rejection probability is defined by the formula:<br />max(0, (rq_count -  rq_success_count / sr_threshold) / (rq_count + 1)) ^ (1 / aggression)<br />The aggression dictates how heavily the admission controller will throttle requests<br />upon SR dropping at or below the threshold. A value of 1 will result in a linear<br />increase in rejection probability as SR drops. Any values less than 1.0, will be<br />set to 1.0. If the message is unspecified, the aggression is 1.0. See the<br />admission control documentation for a diagram illustrating this. |
+| `rpsThreshold` | _integer_ |  false  |  | RPSThreshold |
+| `maxRejectionProbability` | _float_ |  false  |  | MaxRejectionProbability |
+| `successCriteria` | _[SuccessCriteria](#successcriteria)_ |  false  |  | SuccessCriteria |
+
+
 #### AppProtocolType
 
 _Underlying type:_ _string_
@@ -504,6 +523,7 @@ _Appears in:_
 | `compression` | _[Compression](#compression) array_ |  false  |  | The compression config for the http streams. |
 | `responseOverride` | _[ResponseOverride](#responseoverride) array_ |  false  |  | ResponseOverride defines the configuration to override specific responses with a custom one.<br />If multiple configurations are specified, the first one to match wins. |
 | `httpUpgrade` | _[ProtocolUpgradeConfig](#protocolupgradeconfig) array_ |  false  |  | HTTPUpgrade defines the configuration for HTTP protocol upgrades.<br />If not specified, the default upgrade configuration(websocket) will be used. |
+| `admissionControl` | _[AdmissionControl](#admissioncontrol)_ |  true  |  |  |
 
 
 #### BackendType
@@ -1891,6 +1911,20 @@ _Appears in:_
 | `service` | _string_ |  false  |  | Service to send in the health check request.<br />If this is not specified, then the health check request applies to the entire<br />server and not to a specific service. |
 
 
+#### GRPCCriteria
+
+
+
+
+
+_Appears in:_
+- [SuccessCriteria](#successcriteria)
+
+| Field | Type | Required | Default | Description |
+| ---   | ---  | ---      | ---     | ---         |
+| `grpcSuccessStatus` | _integer array_ |  true  |  |  |
+
+
 #### GRPCExtAuthService
 
 
@@ -2079,6 +2113,20 @@ _Appears in:_
 | `credential` | _[InjectedCredential](#injectedcredential)_ |  true  |  | Credential is the credential to be injected. |
 
 
+#### HTTPCriteria
+
+
+
+
+
+_Appears in:_
+- [SuccessCriteria](#successcriteria)
+
+| Field | Type | Required | Default | Description |
+| ---   | ---  | ---      | ---     | ---         |
+| `httpSuccessStatus` | _[HTTPSuccessStatus](#httpsuccessstatus) array_ |  false  |  | GRPCCriteria |
+
+
 #### HTTPDirectResponseFilter
 
 
@@ -2215,6 +2263,21 @@ _Appears in:_
 - [HTTPActiveHealthChecker](#httpactivehealthchecker)
 - [RetryOn](#retryon)
 
+
+
+#### HTTPSuccessStatus
+
+
+
+
+
+_Appears in:_
+- [HTTPCriteria](#httpcriteria)
+
+| Field | Type | Required | Default | Description |
+| ---   | ---  | ---      | ---     | ---         |
+| `start` | _integer_ |  true  |  |  |
+| `end` | _integer_ |  true  |  |  |
 
 
 #### HTTPTimeout
@@ -4397,6 +4460,21 @@ _Appears in:_
 | `Prefix` | StringMatchPrefix :the input string must start with the match value.<br /> | 
 | `Suffix` | StringMatchSuffix :the input string must end with the match value.<br /> | 
 | `RegularExpression` | StringMatchRegularExpression :The input string must match the regular expression<br />specified in the match value.<br />The regex string must adhere to the syntax documented in<br />https://github.com/google/re2/wiki/Syntax.<br /> | 
+
+
+#### SuccessCriteria
+
+
+
+
+
+_Appears in:_
+- [AdmissionControl](#admissioncontrol)
+
+| Field | Type | Required | Default | Description |
+| ---   | ---  | ---      | ---     | ---         |
+| `httpCriteria` | _[HTTPCriteria](#httpcriteria)_ |  false  |  | HTTPCriteria |
+| `grpcCriteria` | _[GRPCCriteria](#grpccriteria)_ |  false  |  | GRPCCriteria |
 
 
 #### TCPActiveHealthChecker

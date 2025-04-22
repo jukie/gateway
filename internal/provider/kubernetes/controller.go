@@ -455,25 +455,34 @@ func (r *gatewayAPIReconciler) processBackendRefs(ctx context.Context, gwcResour
 		// Retrieve the EndpointSlices associated with the Service and ServiceImport
 		if endpointSliceLabelKey != "" {
 			endpointSliceList := new(discoveryv1.EndpointSliceList)
+			continueToken := ""
 			opts := []client.ListOption{
 				client.MatchingLabels(map[string]string{
 					endpointSliceLabelKey: string(backendRef.Name),
 				}),
 				client.InNamespace(*backendRef.Namespace),
+				client.Continue(continueToken),
 			}
-			if err := r.client.List(ctx, endpointSliceList, opts...); err != nil {
-				r.log.Error(err, "failed to get EndpointSlices", "namespace", string(*backendRef.Namespace),
-					backendRefKind, string(backendRef.Name))
-			} else {
-				for _, endpointSlice := range endpointSliceList.Items {
-					key := utils.NamespacedName(&endpointSlice).String()
-					if !resourceMappings.allAssociatedEndpointSlices.Has(key) {
-						resourceMappings.allAssociatedEndpointSlices.Insert(key)
-						r.log.Info("added EndpointSlice to resource tree",
-							"namespace", endpointSlice.Namespace,
-							"name", endpointSlice.Name)
-						gwcResource.EndpointSlices = append(gwcResource.EndpointSlices, &endpointSlice)
+			for {
+				if err := r.client.List(ctx, endpointSliceList, opts...); err != nil {
+					r.log.Error(err, "failed to get EndpointSlices", "namespace", string(*backendRef.Namespace),
+						backendRefKind, string(backendRef.Name))
+				} else {
+					for _, endpointSlice := range endpointSliceList.Items {
+						key := utils.NamespacedName(&endpointSlice).String()
+						if !resourceMappings.allAssociatedEndpointSlices.Has(key) {
+							resourceMappings.allAssociatedEndpointSlices.Insert(key)
+							r.log.Info("added EndpointSlice to resource tree",
+								"namespace", endpointSlice.Namespace,
+								"name", endpointSlice.Name)
+							gwcResource.EndpointSlices = append(gwcResource.EndpointSlices, &endpointSlice)
+						}
 					}
+				}
+				if endpointSliceList.Continue != "" {
+					continueToken = endpointSliceList.Continue
+				} else {
+					break
 				}
 			}
 		}

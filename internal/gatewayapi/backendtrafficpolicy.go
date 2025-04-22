@@ -362,6 +362,8 @@ func (t *Translator) translateBackendTrafficPolicyForRoute(
 	cp = buildCompression(policy.Spec.Compression)
 	httpUpgrade = buildHTTPProtocolUpgradeConfig(policy.Spec.HTTPUpgrade)
 
+	ac := buildAdmissionControl(policy.Spec.AdmissionControl)
+
 	ds = translateDNS(policy.Spec.ClusterSettings)
 
 	// Apply IR to all relevant routes
@@ -426,6 +428,7 @@ func (t *Translator) translateBackendTrafficPolicyForRoute(
 						ResponseOverride:  ro,
 						Compression:       cp,
 						HTTPUpgrade:       httpUpgrade,
+						AdmissionControl:  ac,
 					}
 
 					r.Traffic.Name = irTrafficName(policy)
@@ -1011,4 +1014,38 @@ func buildHTTPProtocolUpgradeConfig(cfgs []*egv1a1.ProtocolUpgradeConfig) []stri
 	}
 
 	return result
+}
+
+func buildAdmissionControl(polAdmControl *egv1a1.AdmissionControl) *ir.AdmissionControl {
+	var admissionControl *ir.AdmissionControl
+	if polAdmControl != nil {
+		if polAdmControl.SamplingWindow != nil {
+			admissionControl.SamplingWindow = polAdmControl.SamplingWindow
+		}
+		if polAdmControl.SRThreshold != nil {
+			admissionControl.SRThreshold = polAdmControl.SRThreshold
+		}
+		if polAdmControl.Aggression != nil {
+			admissionControl.Aggression = polAdmControl.Aggression
+		}
+		if polAdmControl.RPSThreshold != nil {
+			admissionControl.RPSThreshold = polAdmControl.RPSThreshold
+		}
+		if polAdmControl.MaxRejectionProbability != nil {
+			admissionControl.MaxRejectionProbability = polAdmControl.MaxRejectionProbability
+		}
+		if polAdmControl.SuccessCriteria != nil {
+			admissionControl.SuccessCriteria = &ir.SuccessCriteria{}
+			if polAdmControl.SuccessCriteria.GRPCCriteria != nil {
+				admissionControl.SuccessCriteria.GRPCCriteria = &ir.GRPCCriteria{SuccessCriteria: polAdmControl.SuccessCriteria.GRPCCriteria.SuccessCriteria}
+			}
+			if polAdmControl.SuccessCriteria.HTTPCriteria != nil {
+				admissionControl.SuccessCriteria.HTTPCriteria = &ir.HTTPCriteria{}
+				for _, successStatus := range polAdmControl.SuccessCriteria.HTTPCriteria.SuccessStatus {
+					admissionControl.SuccessCriteria.HTTPCriteria.SuccessStatus = append(admissionControl.SuccessCriteria.HTTPCriteria.SuccessStatus, ir.HTTPSuccessStatus{Start: successStatus.Start, End: successStatus.End})
+				}
+			}
+		}
+	}
+	return admissionControl
 }

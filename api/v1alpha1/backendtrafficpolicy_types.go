@@ -106,6 +106,8 @@ type BackendTrafficPolicySpec struct {
 	// +notImplementedHide
 	// +optional
 	Telemetry *BackendTelemetry `json:"telemetry,omitempty"`
+
+	AdmissionControl *AdmissionControl `json:"admissionControl,omitempty"`
 }
 
 type BackendTelemetry struct {

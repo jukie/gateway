@@ -49,6 +49,70 @@ spec:
           spec:
             description: spec defines the desired state of BackendTrafficPolicy.
             properties:
+              admissionControl:
+                properties:
+                  agression:
+                    description: |-
+                      Rejection probability is defined by the formula:
+
+                      max(0, (rq_count -  rq_success_count / sr_threshold) / (rq_count + 1)) ^ (1 / aggression)
+                      The aggression dictates how heavily the admission controller will throttle requests
+                      upon SR dropping at or below the threshold. A value of 1 will result in a linear
+                      increase in rejection probability as SR drops. Any values less than 1.0, will be
+                      set to 1.0. If the message is unspecified, the aggression is 1.0. See the
+                      admission control documentation for a diagram illustrating this.
+                    type: number
+                  maxRejectionProbability:
+                    description: MaxRejectionProbability
+                    type: number
+                  rpsThreshold:
+                    description: RPSThreshold
+                    format: int32
+                    type: integer
+                  samplingWindow:
+                    description: |-
+                      A Duration represents the elapsed time between two instants
+                      as an int64 nanosecond count. The representation limits the
+                      largest representable duration to approximately 290 years.
+                    format: int64
+                    type: integer
+                  srThreshold:
+                    description: |-
+                      Dictates the success rate at which the rejection probability is non-zero.
+                      As success rate drops below this threshold, rejection probability will increase.
+                      Any success rate above the threshold results in a rejection probability of 0.
+                      Defaults to 95%.
+                    type: number
+                  successCriteria:
+                    description: SuccessCriteria
+                    properties:
+                      grpcCriteria:
+                        description: GRPCCriteria
+                        properties:
+                          grpcSuccessStatus:
+                            items:
+                              format: int32
+                              type: integer
+                            type: array
+                        type: object
+                      httpCriteria:
+                        description: HTTPCriteria
+                        properties:
+                          httpSuccessStatus:
+                            description: GRPCCriteria
+                            items:
+                              properties:
+                                end:
+                                  format: int32
+                                  type: integer
+                                start:
+                                  format: int32
+                                  type: integer
+                              type: object
+                            type: array
+                        type: object
+                    type: object
+                type: object
               circuitBreaker:
                 description: |-
                   Circuit Breaker settings for the upstream connections and requests.
