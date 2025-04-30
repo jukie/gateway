@@ -34,6 +34,11 @@ type LoadBalancer struct {
 	//
 	// +optional
 	SlowStart *SlowStart `json:"slowStart,omitempty"`
+
+	// TrafficDistribution defines the desired traffic distribution across localities
+	//
+	// +optional
+	TrafficDistribution *TrafficDistribution `json:"trafficDistribution,omitempty"`
 }
 
 // LoadBalancerType specifies the types of LoadBalancer.
@@ -134,4 +139,99 @@ type SlowStart struct {
 	// +kubebuilder:validation:Required
 	Window *metav1.Duration `json:"window"`
 	// TODO: Add support for non-linear traffic increases based on user usage.
+}
+
+// TrafficDistribution defines the desired traffic distribution across localities
+//
+// +k8s:deepcopy-gen=true
+// +notImplementedHide
+type TrafficDistribution struct {
+	DistributionType DistributionType `json:"distributionType,omitempty" yaml:"distributionType,omitempty"`
+	// ZoneAwareConfig enables Envoy Zone Aware Routing and preserves routing requests
+	// to upstream hosts in the local locality zone.
+	//
+	// +optional
+	ZoneAwareConfig *ZoneAwareConfig `json:"zoneAwareConfig,omitempty" yaml:"zoneAwareConfig,omitempty"`
+	// LocalityWeightedConfig enables Envoy Locality Weighted load balancing and allows
+	// for assigning distribution weights per locality zones.
+	//
+	// +optional
+	LocalityWeightedConfig *LocalityWeightedConfig `json:"localityWeightedConfig,omitempty" yaml:"localityWeightedConfig,omitempty"`
+}
+
+// DistributionType configures which locality distribution type to use for LoadBalancing
+//
+// +notImplementedHide
+// +kubebuilder:validation:Enum=ZoneAware;RejectRequest;LocalityWeighted
+type DistributionType string
+
+const (
+	ZoneAwareDistribution DistributionType = "ZoneAware"
+	LocalityWeighted      DistributionType = "LocalityWeighted"
+)
+
+// ZoneAwareConfig defines the zone aware load balancing configuration
+//
+// +k8s:deepcopy-gen=true
+// +notImplementedHide
+type ZoneAwareConfig struct {
+	// RoutingEnabled configures percentage of requests that will be
+	// considered for zone aware routing if zone aware routing is configured.
+	// If not specified, the default is 100.
+	//
+	// +optional
+	RoutingEnabled *float32 `json:"routingEnabled,omitempty" yaml:"routingEnabled,omitempty"`
+	// MinClusterSize configures minimum upstream cluster size required for
+	// zone aware routing.
+	// If not specified, the default is empty which translates to 6
+	//
+	// +optional
+	MinClusterSize *int `json:"minClusterSize,omitempty" yaml:"minClusterSize,omitempty"`
+	// FailTrafficOnPanic configures Envoys behavior when the cluster is in
+	// panic mode. If set to true Envoy will not consider any hosts when and will
+	// fail all requests as if all hosts are unhealthy.
+	// If not specified, the default is false
+	//
+	// +optional
+	FailTrafficOnPanic *bool `json:"failTrafficOnPanic,omitempty" yaml:"failTrafficOnPanic,omitempty"`
+	// ForceLocalityDirectRouting configures Envoy to always route requests to the
+	// local locality zone regardless. By default, envoy uses a strong preference
+	// for local while still achieving equal distribution between upstreams hosts.
+	//
+	// +optional
+	ForceLocalityDirectRouting *bool `json:"forceLocalityDirectRouting,omitempty" yaml:"forceLocalityDirectRouting,omitempty"`
+	// ForceLocalZone configures Envoy to always route requests to the local
+	// locality zone regardless. By default, envoy uses a strong preference for
+	// local while still achieving equal distribution between upstreams hosts.
+	//
+	// +optional
+	ForceLocalZone *ForceLocalZone `json:"forceLocalZone,omitempty" yaml:"forceLocalZone,omitempty"`
+}
+
+// ForceLocalZone configures Envoy to always route requests to the local
+// locality zone regardless. By default, envoy uses a strong preference for
+// local while still achieving equal distribution between upstreams hosts.
+//
+// +k8s:deepcopy-gen=true
+// +notImplementedHide
+type ForceLocalZone struct {
+	// MinSize is the minimum number of hosts in the local locality zone for
+	// Envoy to use ForceLocalZone. When less than MinSize falls back to
+	// default zone aware routing behavior.
+	// The default is 1
+	//
+	// +optional
+	MinSize *int `json:"minSize,omitempty" yaml:"minSize,omitempty"`
+}
+
+// LocalityWeightedConfig is the configuration to use with locality weight load balancing
+//
+// +k8s:deepcopy-gen=true
+// +notImplementedHide
+type LocalityWeightedConfig struct {
+	// ZoneWeights is a mapping of zone names to assigned weights which will be
+	// used for traffic distribution. Exampple: `zone-1: 30`
+	//
+	// +optional
+	ZoneWeights map[string]int `json:"localityWeights,omitempty" yaml:"localityWeights,omitempty"`
 }

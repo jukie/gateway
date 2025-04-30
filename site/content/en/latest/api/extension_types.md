@@ -1059,6 +1059,21 @@ _Appears in:_
 | `IPv4AndIPv6` | IPv4AndIPv6DNSLookupFamily mean the DNS resolver will perform a lookup for both IPv4 and IPv6 families, and return all resolved<br />addresses. When this is used, Happy Eyeballs will be enabled for upstream connections.<br /> | 
 
 
+#### DistributionType
+
+_Underlying type:_ _string_
+
+DistributionType configures which locality distribution type to use for LoadBalancing
+
+_Appears in:_
+- [TrafficDistribution](#trafficdistribution)
+
+| Value | Description |
+| ----- | ----------- |
+| `ZoneAware` |  | 
+| `LocalityWeighted` |  | 
+
+
 #### EnvironmentCustomTag
 
 
@@ -1928,6 +1943,22 @@ _Appears in:_
 | `name` | _[EnvoyFilter](#envoyfilter)_ |  true  |  | Name of the filter. |
 | `before` | _[EnvoyFilter](#envoyfilter)_ |  true  |  | Before defines the filter that should come before the filter.<br />Only one of Before or After must be set. |
 | `after` | _[EnvoyFilter](#envoyfilter)_ |  true  |  | After defines the filter that should come after the filter.<br />Only one of Before or After must be set. |
+
+
+#### ForceLocalZone
+
+
+
+ForceLocalZone configures Envoy to always route requests to the local
+locality zone regardless. By default, envoy uses a strong preference for
+local while still achieving equal distribution between upstreams hosts.
+
+_Appears in:_
+- [ZoneAwareConfig](#zoneawareconfig)
+
+| Field | Type | Required | Default | Description |
+| ---   | ---  | ---      | ---     | ---         |
+| `minSize` | _integer_ |  false  |  | MinSize is the minimum number of hosts in the local locality zone for<br />Envoy to use ForceLocalZone. When less than MinSize falls back to<br />default zone aware routing behavior.<br />The default is 1 |
 
 
 #### GRPCActiveHealthChecker
@@ -2975,6 +3006,7 @@ _Appears in:_
 | `type` | _[LoadBalancerType](#loadbalancertype)_ |  true  |  | Type decides the type of Load Balancer policy.<br />Valid LoadBalancerType values are<br />"ConsistentHash",<br />"LeastRequest",<br />"Random",<br />"RoundRobin". |
 | `consistentHash` | _[ConsistentHash](#consistenthash)_ |  false  |  | ConsistentHash defines the configuration when the load balancer type is<br />set to ConsistentHash |
 | `slowStart` | _[SlowStart](#slowstart)_ |  false  |  | SlowStart defines the configuration related to the slow start load balancer policy.<br />If set, during slow start window, traffic sent to the newly added hosts will gradually increase.<br />Currently this is only supported for RoundRobin and LeastRequest load balancers |
+| `trafficDistribution` | _[TrafficDistribution](#trafficdistribution)_ |  false  |  | TrafficDistribution defines the desired traffic distribution across localities |
 
 
 #### LoadBalancerType
@@ -3037,6 +3069,20 @@ _Appears in:_
 | Field | Type | Required | Default | Description |
 | ---   | ---  | ---      | ---     | ---         |
 | `rules` | _[RateLimitRule](#ratelimitrule) array_ |  false  |  | Rules are a list of RateLimit selectors and limits. If a request matches<br />multiple rules, the strictest limit is applied. For example, if a request<br />matches two rules, one with 10rps and one with 20rps, the final limit will<br />be based on the rule with 10rps. |
+
+
+#### LocalityWeightedConfig
+
+
+
+LocalityWeightedConfig is the configuration to use with locality weight load balancing
+
+_Appears in:_
+- [TrafficDistribution](#trafficdistribution)
+
+| Field | Type | Required | Default | Description |
+| ---   | ---  | ---      | ---     | ---         |
+| `localityWeights` | _object (keys:string, values:integer)_ |  false  |  | ZoneWeights is a mapping of zone names to assigned weights which will be<br />used for traffic distribution. Exampple: `zone-1: 30` |
 
 
 #### LogLevel
@@ -4682,6 +4728,22 @@ _Appears in:_
 | `Datadog` |  | 
 
 
+#### TrafficDistribution
+
+
+
+TrafficDistribution defines the desired traffic distribution across localities
+
+_Appears in:_
+- [LoadBalancer](#loadbalancer)
+
+| Field | Type | Required | Default | Description |
+| ---   | ---  | ---      | ---     | ---         |
+| `distributionType` | _[DistributionType](#distributiontype)_ |  true  |  |  |
+| `zoneAwareConfig` | _[ZoneAwareConfig](#zoneawareconfig)_ |  false  |  | ZoneAwareConfig enables Envoy Zone Aware Routing and preserves routing requests<br />to upstream hosts in the local locality zone. |
+| `localityWeightedConfig` | _[LocalityWeightedConfig](#localityweightedconfig)_ |  false  |  | LocalityWeightedConfig enables Envoy Locality Weighted load balancing and allows<br />for assigning distribution weights per locality zones. |
+
+
 #### TriggerEnum
 
 _Underlying type:_ _string_
@@ -4937,5 +4999,23 @@ _Appears in:_
 | ---   | ---  | ---      | ---     | ---         |
 | `enable128BitTraceId` | _boolean_ |  false  |  | Enable128BitTraceID determines whether a 128bit trace id will be used<br />when creating a new trace instance. If set to false, a 64bit trace<br />id will be used. |
 | `disableSharedSpanContext` | _boolean_ |  false  |  | DisableSharedSpanContext determines whether the default Envoy behaviour of<br />client and server spans sharing the same span context should be disabled. |
+
+
+#### ZoneAwareConfig
+
+
+
+ZoneAwareConfig defines the zone aware load balancing configuration
+
+_Appears in:_
+- [TrafficDistribution](#trafficdistribution)
+
+| Field | Type | Required | Default | Description |
+| ---   | ---  | ---      | ---     | ---         |
+| `routingEnabled` | _float_ |  false  |  | RoutingEnabled configures percentage of requests that will be<br />considered for zone aware routing if zone aware routing is configured.<br />If not specified, the default is 100. |
+| `minClusterSize` | _integer_ |  false  |  | MinClusterSize configures minimum upstream cluster size required for<br />zone aware routing.<br />If not specified, the default is empty which translates to 6 |
+| `failTrafficOnPanic` | _boolean_ |  false  |  | FailTrafficOnPanic configures Envoys behavior when the cluster is in<br />panic mode. If set to true Envoy will not consider any hosts when and will<br />fail all requests as if all hosts are unhealthy.<br />If not specified, the default is false |
+| `forceLocalityDirectRouting` | _boolean_ |  false  |  | ForceLocalityDirectRouting configures Envoy to always route requests to the<br />local locality zone regardless. By default, envoy uses a strong preference<br />for local while still achieving equal distribution between upstreams hosts. |
+| `forceLocalZone` | _[ForceLocalZone](#forcelocalzone)_ |  false  |  | ForceLocalZone configures Envoy to always route requests to the local<br />locality zone regardless. By default, envoy uses a strong preference for<br />local while still achieving equal distribution between upstreams hosts. |
 
 

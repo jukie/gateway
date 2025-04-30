@@ -652,6 +652,77 @@ spec:
                     required:
                     - window
                     type: object
+                  trafficDistribution:
+                    description: TrafficDistribution defines the desired traffic distribution
+                      across localities
+                    properties:
+                      distributionType:
+                        description: DistributionType configures which locality distribution
+                          type to use for LoadBalancing
+                        enum:
+                        - ZoneAware
+                        - RejectRequest
+                        - LocalityWeighted
+                        type: string
+                      localityWeightedConfig:
+                        description: |-
+                          LocalityWeightedConfig enables Envoy Locality Weighted load balancing and allows
+                          for assigning distribution weights per locality zones.
+                        properties:
+                          localityWeights:
+                            additionalProperties:
+                              type: integer
+                            description: |-
+                              ZoneWeights is a mapping of zone names to assigned weights which will be
+                              used for traffic distribution. Exampple: `zone-1: 30`
+                            type: object
+                        type: object
+                      zoneAwareConfig:
+                        description: |-
+                          ZoneAwareConfig enables Envoy Zone Aware Routing and preserves routing requests
+                          to upstream hosts in the local locality zone.
+                        properties:
+                          failTrafficOnPanic:
+                            description: |-
+                              FailTrafficOnPanic configures Envoys behavior when the cluster is in
+                              panic mode. If set to true Envoy will not consider any hosts when and will
+                              fail all requests as if all hosts are unhealthy.
+                              If not specified, the default is false
+                            type: boolean
+                          forceLocalZone:
+                            description: |-
+                              ForceLocalZone configures Envoy to always route requests to the local
+                              locality zone regardless. By default, envoy uses a strong preference for
+                              local while still achieving equal distribution between upstreams hosts.
+                            properties:
+                              minSize:
+                                description: |-
+                                  MinSize is the minimum number of hosts in the local locality zone for
+                                  Envoy to use ForceLocalZone. When less than MinSize falls back to
+                                  default zone aware routing behavior.
+                                  The default is 1
+                                type: integer
+                            type: object
+                          forceLocalityDirectRouting:
+                            description: |-
+                              ForceLocalityDirectRouting configures Envoy to always route requests to the
+                              local locality zone regardless. By default, envoy uses a strong preference
+                              for local while still achieving equal distribution between upstreams hosts.
+                            type: boolean
+                          minClusterSize:
+                            description: |-
+                              MinClusterSize configures minimum upstream cluster size required for
+                              zone aware routing.
+                              If not specified, the default is empty which translates to 6
+                            type: integer
+                          routingEnabled:
+                            description: |-
+                              RoutingEnabled configures percentage of requests that will be
+                              considered for zone aware routing if zone aware routing is configured.
+                              If not specified, the default is 100.
+                            type: number
+                        type: object
+                    type: object
                   type:
                     description: |-
                       Type decides the type of Load Balancer policy.
