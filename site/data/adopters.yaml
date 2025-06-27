@@ -75,3 +75,7 @@ adopters:
     logo: "/logos/alibaba-cloud.png"
     url: "https://www.alibabacloud.com/"
     description: "Alibaba Cloud Container Service adopts Envoy Gateway as a network addon, providing comprehensive Gateway API support and dedicated LLM load balancing capabilities."
+  - name: "Verve"
+    logo: "/logos/verve.png"
+    url: "https://www.verve.com"
+    description: "Verve is using Envoy Gateway to handle global scale load balancing within Kubernetes via GatewayAPI."
