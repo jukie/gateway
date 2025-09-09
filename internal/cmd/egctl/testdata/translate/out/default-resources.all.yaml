@@ -1012,6 +1012,9 @@ xds:
                     typedConfig:
                       '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
                       suppressEnvoyHeaders: true
+                  httpProtocolOptions:
+                    acceptHttp10: true
+                    defaultHostForHttp10: ready.gateway.envoyproxy.io
                   routeConfig:
                     name: ready_route
                     virtualHosts:

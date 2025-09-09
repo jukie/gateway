@@ -494,6 +494,10 @@
                                 }
                               }
                             ],
+                            "httpProtocolOptions": {
+                              "acceptHttp10": true,
+                              "defaultHostForHttp10": "ready.gateway.envoyproxy.io"
+                            },
                             "routeConfig": {
                               "name": "ready_route",
                               "virtualHosts": [

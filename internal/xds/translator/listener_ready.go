@@ -65,6 +65,10 @@ func buildReadyListener(ready *ir.ReadyListener) (*listenerv3.Listener, error) {
 			},
 		},
 		HttpFilters: hcmFilters,
+		HttpProtocolOptions: &corev3.Http1ProtocolOptions{
+			AcceptHttp_10:         true,
+			DefaultHostForHttp_10: "ready.gateway.envoyproxy.io",
+		},
 	}
 
 	hcmAny, err := proto.ToAnyWithValidation(hcm)
