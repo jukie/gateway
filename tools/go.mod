@@ -4,6 +4,7 @@ go 1.25.3
 
 tool (
 	github.com/bufbuild/buf/cmd/buf
+	github.com/ctrf-io/go-ctrf-json-reporter/cmd/go-ctrf-json-reporter
 	github.com/elastic/crd-ref-docs
 	github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 	github.com/google/go-jsonnet/cmd/jsonnet
@@ -98,6 +99,7 @@ require (
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.17.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
+	github.com/ctrf-io/go-ctrf-json-reporter v0.0.11 // indirect
 	github.com/curioswitch/go-reassign v0.3.0 // indirect
 	github.com/daixiang0/gci v0.13.7 // indirect
 	github.com/dave/dst v0.27.3 // indirect

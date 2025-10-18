@@ -248,6 +248,11 @@ else
 	$(GO_TOOL) gotestsum --format=standard-verbose --jsonfile=$(OUTPUT_DIR)/test-reports/e2e-single.json --junitfile=$(OUTPUT_DIR)/test-reports/e2e-single-junit.xml -- $(E2E_TEST_ARGS) ./test/e2e --gateway-class=envoy-gateway --debug=true --cleanup-base-resources=$(E2E_CLEANUP) \
 		--run-test $(E2E_RUN_TEST) $(E2E_REDIRECT)
 endif
+	@for json_file in $(OUTPUT_DIR)/test-reports/*.json; do \
+		if [ -f "$$json_file" ]; then \
+			$(GO_TOOL) go-ctrf-json-reporter < "$$json_file" > "$${json_file%.json}-ctrf.json"; \
+		fi \
+	done
 
 run-e2e-upgrade:
 	go test $(E2E_TEST_ARGS) ./test/e2e/upgrade --gateway-class=upgrade --debug=true --cleanup-base-resources=$(E2E_CLEANUP)
@@ -324,6 +329,11 @@ ifeq ($(CONFORMANCE_RUN_TEST),)
 else
 	$(GO_TOOL) gotestsum --format=standard-verbose --jsonfile=$(OUTPUT_DIR)/test-reports/conformance.json --junitfile=$(OUTPUT_DIR)/test-reports/conformance-junit.xml -- -v -tags conformance ./test/conformance --gateway-class=envoy-gateway --debug=true --run-test $(CONFORMANCE_RUN_TEST)
 endif
+	@for json_file in $(OUTPUT_DIR)/test-reports/*.json; do \
+		if [ -f "$$json_file" ]; then \
+			$(GO_TOOL) go-ctrf-json-reporter < "$$json_file" > "$${json_file%.json}-ctrf.json"; \
+		fi \
+	done
 
 CONFORMANCE_REPORT_PATH ?=
 
@@ -342,6 +352,11 @@ else
     # we didn't care about output when running single test
 	$(GO_TOOL) gotestsum --format=standard-verbose --jsonfile=$(OUTPUT_DIR)/test-reports/experimental-conformance.json --junitfile=$(OUTPUT_DIR)/test-reports/experimental-conformance-junit.xml -- -v -tags experimental ./test/conformance -run TestExperimentalConformance --gateway-class=envoy-gateway --debug=true --run-test $(CONFORMANCE_RUN_TEST)
 endif
+	@for json_file in $(OUTPUT_DIR)/test-reports/*.json; do \
+		if [ -f "$$json_file" ]; then \
+			$(GO_TOOL) go-ctrf-json-reporter < "$$json_file" > "$${json_file%.json}-ctrf.json"; \
+		fi \
+	done
 
 
 .PHONY: delete-cluster

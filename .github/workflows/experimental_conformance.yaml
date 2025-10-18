@@ -74,10 +74,12 @@ jobs:
           retention-days: 30
 
       - name: Publish Experimental Conformance Test Results
-        uses: dorny/test-reporter@dc3a92680fcc15842eef52e8c4606ea7ce6bd3f3  # v2.1.1
+        uses: ctrf-io/github-test-reporter@9bd31188517cfb3ff683f135041cc3bfbb0c78b3  # v1.0.25
         if: always()
         with:
-          name: Experimental Conformance Tests (${{ matrix.target.version }}/${{ matrix.target.ipFamily }}/${{ matrix.target.profile }})
-          path: bin/test-reports/*-junit.xml
-          reporter: java-junit
+          ctrf-file: bin/test-reports/*-ctrf.json
+          test-name: Experimental Conformance Tests (${{ matrix.target.version }}/${{ matrix.target.ipFamily }}/${{ matrix.target.profile }})
+          flaky-report: true
+          flaky-rate-report: true
+          on-fail-only: false
           fail-on-error: false
