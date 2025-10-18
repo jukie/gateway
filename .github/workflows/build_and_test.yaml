@@ -223,6 +223,38 @@ jobs:
         - version: v1.33.1
           ipFamily: ipv4
           profile: xds-name-scheme-v2
+        package:
+        - name: main
+          path: ./test/e2e
+          class: envoy-gateway
+        - name: merge-gateways
+          path: ./test/e2e/merge_gateways
+          class: merge-gateways
+        - name: multiple-gc
+          path: ./test/e2e/multiple_gc
+          class: multiple-gc
+        - name: upgrade
+          path: ./test/e2e/upgrade
+          class: upgrade
+        split:
+        - index: 0
+          total: 2
+        - index: 1
+          total: 2
+        exclude:
+        # Only split the main package, not the others
+        - package:
+            name: merge-gateways
+          split:
+            index: 1
+        - package:
+            name: multiple-gc
+          split:
+            index: 1
+        - package:
+            name: upgrade
+          split:
+            index: 1
 
     steps:
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
@@ -239,8 +271,18 @@ jobs:
         chmod +x bin/linux/amd64/envoy-gateway
         chmod +x bin/linux/arm64/envoy-gateway
 
+    # Split tests for main package only
+    - name: Split E2E Tests
+      if: matrix.package.name == 'main'
+      id: test_split
+      uses: hashicorp-forge/go-test-split-action@720a77701f0d1b2973126510492a6aad11ed0d5a  # v2.0.0
+      with:
+        index: ${{ matrix.split.index }}
+        total: ${{ matrix.split.total }}
+        packages: ${{ matrix.package.path }}
+
     # E2E
-    - name: Run E2E Tests
+    - name: Run E2E Tests (${{ matrix.package.name }})
       env:
         KIND_NODE_TAG: ${{ matrix.target.version }}
         IMAGE_PULL_POLICY: IfNotPresent
@@ -254,13 +296,20 @@ jobs:
         E2E_BACKEND_UPGRADE_QPS: "3000"
         # Cluster trust bundle reach beta in v1.33, so we can enable it for v1.33 and later.
         ENABLE_CLUSTER_TRUST_BUNDLE: ${{ startsWith(matrix.target.version, 'v1.33') }}
+        # Package-specific settings
+        E2E_PACKAGE_PATH: ${{ matrix.package.path }}
+        E2E_PACKAGE_NAME: ${{ matrix.package.name }}
+        E2E_PACKAGE_CLASS: ${{ matrix.package.class }}
+        E2E_TEST_PATTERN: ${{ matrix.package.name == 'main' && steps.test_split.outputs.run || '' }}
+        # For upgrade tests
+        LAST_VERSION_TAG: ${{ matrix.package.name == 'upgrade' && 'will-be-read-from-VERSION-file' || '' }}
       run: make e2e
 
     - name: Upload E2E Test Reports
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
       if: always()
       with:
-        name: e2e-test-reports-${{ matrix.target.version }}-${{ matrix.target.ipFamily }}-${{ matrix.target.profile }}
+        name: e2e-test-reports-${{ matrix.target.version }}-${{ matrix.target.ipFamily }}-${{ matrix.target.profile }}-${{ matrix.package.name }}-split${{ matrix.split.index }}
         path: bin/test-reports/
         retention-days: 30
 
@@ -269,7 +318,7 @@ jobs:
       if: always()
       with:
         ctrf-file: bin/test-reports/*-ctrf.json
-        test-name: E2E Tests (${{ matrix.target.version }}/${{ matrix.target.ipFamily }}/${{ matrix.target.profile }})
+        test-name: E2E Tests (${{ matrix.package.name }}/${{ matrix.target.version }}/${{ matrix.target.ipFamily }}/${{ matrix.target.profile }}${{ matrix.package.name == 'main' && format('/split-{0}', matrix.split.index) || '' }})
         flaky-report: true
         flaky-rate-report: true
         on-fail-only: false

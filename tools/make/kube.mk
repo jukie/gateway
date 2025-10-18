@@ -239,6 +239,17 @@ setup-mac-net-connect:
 run-e2e: ## Run e2e tests
 	@$(LOG_TARGET)
 	@mkdir -p $(OUTPUT_DIR)/test-reports
+ifdef E2E_PACKAGE_PATH
+	# Running single package: $(E2E_PACKAGE_NAME)
+	$(if $(E2E_TEST_PATTERN), \
+		$(GO_TOOL) gotestsum --format=standard-verbose --jsonfile=$(OUTPUT_DIR)/test-reports/$(E2E_PACKAGE_NAME).json --junitfile=$(OUTPUT_DIR)/test-reports/$(E2E_PACKAGE_NAME)-junit.xml -- $(E2E_TEST_ARGS) $(E2E_PACKAGE_PATH) --gateway-class=$(E2E_PACKAGE_CLASS) --debug=true --cleanup-base-resources=$(E2E_CLEANUP) -run '$(E2E_TEST_PATTERN)' $(E2E_REDIRECT), \
+		$(if $(filter upgrade,$(E2E_PACKAGE_NAME)), \
+			LAST_VERSION_TAG=$(shell cat VERSION) $(GO_TOOL) gotestsum --format=standard-verbose --jsonfile=$(OUTPUT_DIR)/test-reports/$(E2E_PACKAGE_NAME).json --junitfile=$(OUTPUT_DIR)/test-reports/$(E2E_PACKAGE_NAME)-junit.xml -- $(E2E_TEST_ARGS) $(E2E_PACKAGE_PATH) --gateway-class=$(E2E_PACKAGE_CLASS) --debug=true --cleanup-base-resources=$(E2E_CLEANUP) $(E2E_REDIRECT), \
+			$(GO_TOOL) gotestsum --format=standard-verbose --jsonfile=$(OUTPUT_DIR)/test-reports/$(E2E_PACKAGE_NAME).json --junitfile=$(OUTPUT_DIR)/test-reports/$(E2E_PACKAGE_NAME)-junit.xml -- $(E2E_TEST_ARGS) $(E2E_PACKAGE_PATH) --gateway-class=$(E2E_PACKAGE_CLASS) --debug=true --cleanup-base-resources=$(E2E_CLEANUP) $(E2E_REDIRECT) \
+		) \
+	)
+else
+	# Running all packages (backward compatible)
 ifeq ($(E2E_RUN_TEST),)
 	$(GO_TOOL) gotestsum --format=standard-verbose --jsonfile=$(OUTPUT_DIR)/test-reports/e2e-main.json --junitfile=$(OUTPUT_DIR)/test-reports/e2e-main-junit.xml -- $(E2E_TEST_ARGS) ./test/e2e --gateway-class=envoy-gateway --debug=true --cleanup-base-resources=false $(E2E_REDIRECT)
 	$(GO_TOOL) gotestsum --format=standard-verbose --jsonfile=$(OUTPUT_DIR)/test-reports/e2e-merge-gateways.json --junitfile=$(OUTPUT_DIR)/test-reports/e2e-merge-gateways-junit.xml -- $(E2E_TEST_ARGS) ./test/e2e/merge_gateways --gateway-class=merge-gateways --debug=true --cleanup-base-resources=false
@@ -247,6 +258,7 @@ ifeq ($(E2E_RUN_TEST),)
 else
 	$(GO_TOOL) gotestsum --format=standard-verbose --jsonfile=$(OUTPUT_DIR)/test-reports/e2e-single.json --junitfile=$(OUTPUT_DIR)/test-reports/e2e-single-junit.xml -- $(E2E_TEST_ARGS) ./test/e2e --gateway-class=envoy-gateway --debug=true --cleanup-base-resources=$(E2E_CLEANUP) \
 		--run-test $(E2E_RUN_TEST) $(E2E_REDIRECT)
+endif
 endif
 	@for json_file in $(OUTPUT_DIR)/test-reports/*.json; do \
 		if [ -f "$$json_file" ]; then \
