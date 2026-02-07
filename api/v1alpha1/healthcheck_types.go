@@ -179,6 +179,14 @@ type HTTPActiveHealthChecker struct {
 	// Defaults to 200 only
 	// +optional
 	ExpectedStatuses []HTTPStatus `json:"expectedStatuses,omitempty" yaml:"expectedStatuses,omitempty"`
+	// RetriableStatuses defines a list of HTTP response statuses that count toward
+	// the unhealthyThreshold but do not immediately mark the host as unhealthy.
+	// Without this field, any response not matching expectedStatuses causes the host
+	// to be considered immediately unhealthy, ignoring unhealthyThreshold.
+	// Ranges follow half-open semantics of Int64Range in the Envoy API.
+	// The expectedStatuses field takes precedence for any overlapping status codes.
+	// +optional
+	RetriableStatuses []HTTPStatus `json:"retriableStatuses,omitempty" yaml:"retriableStatuses,omitempty"`
 	// ExpectedResponse defines a list of HTTP expected responses to match.
 	// +optional
 	ExpectedResponse *ActiveHealthCheckPayload `json:"expectedResponse,omitempty" yaml:"expectedResponse,omitempty"`

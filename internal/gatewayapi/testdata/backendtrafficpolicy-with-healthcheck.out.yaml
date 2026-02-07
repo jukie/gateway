@@ -18,6 +18,10 @@ backendTrafficPolicies:
           hostname: foo.bar
           method: GET
           path: /healthz
+          retriableStatuses:
+          - 500
+          - 502
+          - 503
         interval: 5s
         timeout: 1s
         type: HTTP
@@ -1244,6 +1248,10 @@ xdsIR:
                 host: foo.bar
                 method: GET
                 path: /healthz
+                retriableStatuses:
+                - 500
+                - 502
+                - 503
               interval: 5s
               timeout: 1s
               unhealthyThreshold: 3

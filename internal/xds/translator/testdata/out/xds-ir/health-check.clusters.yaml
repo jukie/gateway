@@ -21,6 +21,11 @@
       path: /healthz
       receive:
       - text: 6f6b
+      retriableStatuses:
+      - end: "501"
+        start: "500"
+      - end: "504"
+        start: "503"
     interval: 3s
     timeout: 0.500s
     unhealthyThreshold: 3

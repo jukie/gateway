@@ -560,6 +560,19 @@ func buildHTTPActiveHealthChecker(h *egv1a1.HTTPActiveHealthChecker) *ir.HTTPHea
 	}
 	irHTTP.ExpectedStatuses = irStatuses
 
+	// deduplicate retriable http statuses
+	retriableSet := sets.NewInt()
+	for _, r := range h.RetriableStatuses {
+		retriableSet.Insert(int(r))
+	}
+	if retriableSet.Len() > 0 {
+		irRetriable := make([]ir.HTTPStatus, 0, retriableSet.Len())
+		for _, r := range retriableSet.List() {
+			irRetriable = append(irRetriable, ir.HTTPStatus(r))
+		}
+		irHTTP.RetriableStatuses = irRetriable
+	}
+
 	irHTTP.ExpectedResponse = translateActiveHealthCheckPayload(h.ExpectedResponse)
 	return irHTTP
 }
