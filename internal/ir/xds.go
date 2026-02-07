@@ -1477,6 +1477,11 @@ type HTTPExtAuthService struct {
 	// original client request.
 	// +optional
 	HeadersToBackend []string `json:"headersToBackend,omitempty"`
+
+	// HeadersToDownstream are the authorization response headers that will be forwarded
+	// to the downstream client when the authorization request is denied.
+	// +optional
+	HeadersToDownstream []string `json:"headersToDownstream,omitempty"`
 }
 
 // GRPCExtAuthService defines the gRPC External Authorization service

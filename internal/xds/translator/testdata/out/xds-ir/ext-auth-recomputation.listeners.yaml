@@ -22,6 +22,10 @@
             failureModeAllow: true
             httpService:
               authorizationResponse:
+                allowedClientHeaders:
+                  patterns:
+                  - ignoreCase: true
+                    prefix: ""
                 allowedUpstreamHeaders:
                   patterns:
                   - exact: header1

@@ -1938,10 +1938,11 @@ func (t *Translator) buildExtAuth(
 
 	if http != nil {
 		extAuth.HTTP = &ir.HTTPExtAuthService{
-			Destination:      *rd,
-			Authority:        authority,
-			Path:             ptr.Deref(http.Path, ""),
-			HeadersToBackend: http.HeadersToBackend,
+			Destination:         *rd,
+			Authority:           authority,
+			Path:                ptr.Deref(http.Path, ""),
+			HeadersToBackend:    http.HeadersToBackend,
+			HeadersToDownstream: http.HeadersToDownstream,
 		}
 	} else {
 		extAuth.GRPC = &ir.GRPCExtAuthService{

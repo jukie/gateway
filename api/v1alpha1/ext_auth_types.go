@@ -162,6 +162,16 @@ type HTTPExtAuthService struct {
 	// original client request.
 	// +optional
 	HeadersToBackend []string `json:"headersToBackend,omitempty"`
+
+	// HeadersToDownstream are the authorization response headers that will be forwarded
+	// to the downstream client when the authorization request is denied (e.g., 302 redirects).
+	// This controls which headers from the ext-auth denial response reach the client, which
+	// is essential for redirect-based authentication flows that rely on headers like Location,
+	// Set-Cookie, and WWW-Authenticate.
+	// If not specified, all authorization response headers will be forwarded to the client,
+	// preserving backward-compatible behavior.
+	// +optional
+	HeadersToDownstream []string `json:"headersToDownstream,omitempty"`
 }
 
 // BodyToExtAuth defines the Body to Ext Auth configuration

@@ -206,11 +206,44 @@ func httpService(http *ir.HTTPExtAuthService, timeout *durationpb.Duration) *ext
 		})
 	}
 
-	if len(headersToBackend) > 0 {
-		service.AuthorizationResponse = &extauthv3.AuthorizationResponse{
-			AllowedUpstreamHeaders: &matcherv3.ListStringMatcher{
-				Patterns: headersToBackend,
+	headersToDownstream := make([]*matcherv3.StringMatcher, 0, len(http.HeadersToDownstream))
+	for _, header := range http.HeadersToDownstream {
+		headersToDownstream = append(headersToDownstream, &matcherv3.StringMatcher{
+			MatchPattern: &matcherv3.StringMatcher_Exact{
+				Exact: header,
 			},
+			IgnoreCase: true,
+		})
+	}
+
+	if len(headersToBackend) > 0 || len(headersToDownstream) > 0 {
+		service.AuthorizationResponse = &extauthv3.AuthorizationResponse{}
+
+		if len(headersToBackend) > 0 {
+			service.AuthorizationResponse.AllowedUpstreamHeaders = &matcherv3.ListStringMatcher{
+				Patterns: headersToBackend,
+			}
+		}
+
+		if len(headersToDownstream) > 0 {
+			service.AuthorizationResponse.AllowedClientHeaders = &matcherv3.ListStringMatcher{
+				Patterns: headersToDownstream,
+			}
+		} else {
+			// When headersToDownstream is not explicitly configured but headersToBackend is,
+			// set a permissive default to forward all auth denial response headers to the client.
+			// This preserves backward-compatible behavior after Envoy v1.37 changed the HTTP
+			// ext_authz filter to strictly require allowed_client_headers for denied responses.
+			service.AuthorizationResponse.AllowedClientHeaders = &matcherv3.ListStringMatcher{
+				Patterns: []*matcherv3.StringMatcher{
+					{
+						MatchPattern: &matcherv3.StringMatcher_Prefix{
+							Prefix: "",
+						},
+						IgnoreCase: true,
+					},
+				},
+			}
 		}
 	}
 
