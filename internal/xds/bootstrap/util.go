@@ -7,6 +7,7 @@ package bootstrap
 
 import (
 	"fmt"
+	"regexp"
 
 	bootstrapv3 "github.com/envoyproxy/go-control-plane/envoy/config/bootstrap/v3"
 	"k8s.io/utils/ptr"
@@ -17,6 +18,13 @@ import (
 	"github.com/envoyproxy/gateway/internal/utils/jsonpatch"
 	"github.com/envoyproxy/gateway/internal/utils/proto"
 )
+
+// envVarSubstRe matches unquoted Envoy environment variable substitution patterns
+// (e.g., $(ENVOY_SERVICE_ZONE)) in YAML values. The YAML round-trip through
+// protobuf/JSON strips YAML-level quotes from these patterns, which causes
+// numeric values (like Azure zone "0") to be parsed as YAML integers instead
+// of strings, crashing Envoy at startup.
+var envVarSubstRe = regexp.MustCompile(`(?m)(:\s+)\$\(([^)]+)\)[ \t]*$`)
 
 // ApplyBootstrapConfig applies the bootstrap config to the default bootstrap config and return the result config.
 // The defaultBootstrap is expected to be a YAML string
@@ -73,7 +81,7 @@ func mergeBootstrap(base string, override *string) (string, error) {
 		return "", fmt.Errorf("failed to convert proto message to YAML: %w", err)
 	}
 
-	return string(data), nil
+	return quoteEnvSubstitutions(string(data)), nil
 }
 
 func jsonPatchBootstrap(baseYAML string, patches []egv1a1.JSONPatchOperation) (string, error) {
@@ -96,5 +104,16 @@ func jsonPatchBootstrap(baseYAML string, patches []egv1a1.JSONPatchOperation) (s
 		return baseYAML, err
 	}
 	yamlBytes, err := yaml.JSONToYAML(jsonBytes)
-	return string(yamlBytes), err
+	if err != nil {
+		return baseYAML, err
+	}
+	return quoteEnvSubstitutions(string(yamlBytes)), nil
+}
+
+// quoteEnvSubstitutions re-quotes Envoy $(VAR) substitution patterns that lose
+// their YAML quotes during the protobuf/JSON round-trip. Without quotes, values
+// like zone: $(ENVOY_SERVICE_ZONE) would become zone: 0 after env substitution,
+// which YAML parses as an integer, crashing Envoy.
+func quoteEnvSubstitutions(yamlStr string) string {
+	return envVarSubstRe.ReplaceAllString(yamlStr, `$1"$($2)"`)
 }

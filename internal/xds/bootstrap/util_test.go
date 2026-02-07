@@ -86,6 +86,41 @@ func TestApplyBootstrapConfig(t *testing.T) {
 	}
 }
 
+func TestQuoteEnvSubstitutions(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "unquoted env var gets quoted",
+			input:    "    zone: $(ENVOY_SERVICE_ZONE)\n",
+			expected: `    zone: "$(ENVOY_SERVICE_ZONE)"` + "\n",
+		},
+		{
+			name:     "already quoted env var unchanged",
+			input:    `    zone: "$(ENVOY_SERVICE_ZONE)"` + "\n",
+			expected: `    zone: "$(ENVOY_SERVICE_ZONE)"` + "\n",
+		},
+		{
+			name:     "non-env-var value unchanged",
+			input:    "    zone: us-east-1a\n",
+			expected: "    zone: us-east-1a\n",
+		},
+		{
+			name:     "multiple env vars in document",
+			input:    "node:\n  locality:\n    zone: $(ENVOY_SERVICE_ZONE)\n    region: $(ENVOY_SERVICE_REGION)\n",
+			expected: "node:\n  locality:\n    zone: \"$(ENVOY_SERVICE_ZONE)\"\n    region: \"$(ENVOY_SERVICE_REGION)\"\n",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := quoteEnvSubstitutions(tc.input)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}
+
 func loadData(caseName, inOrOut string) (string, error) {
 	filename := path.Join("testdata", "merge", fmt.Sprintf("%s.%s.yaml", caseName, inOrOut))
 	b, err := os.ReadFile(filename)
