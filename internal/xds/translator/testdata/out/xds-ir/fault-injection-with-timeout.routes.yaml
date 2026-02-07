@@ -11,6 +11,8 @@
       route:
         cluster: first-route-dest
         idleTimeout: 3600s
+        maxStreamDuration:
+          maxStreamDuration: 60s
         timeout: 60s
         upgradeConfigs:
         - upgradeType: websocket
@@ -28,6 +30,8 @@
       route:
         cluster: second-route-dest
         idleTimeout: 3600s
+        maxStreamDuration:
+          maxStreamDuration: 60s
         timeout: 60s
         upgradeConfigs:
         - upgradeType: websocket
@@ -62,6 +66,8 @@
       route:
         cluster: fourth-route-dest
         idleTimeout: 3600s
+        maxStreamDuration:
+          maxStreamDuration: 60s
         timeout: 60s
         upgradeConfigs:
         - upgradeType: websocket

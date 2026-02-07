@@ -120,6 +120,20 @@ func buildXdsRoute(httpRoute *ir.HTTPRoute, httpListener *ir.HTTPListener) (*rou
 				router.GetRoute().MaxStreamDuration = maxStreamDuration
 			}
 		}
+
+		// When fault injection delay is configured along with a request timeout,
+		// automatically set max_stream_duration to the request timeout value.
+		// This ensures the timeout covers the entire stream including fault
+		// injection delay, which executes before the router filter starts
+		// the route timeout clock (fault filter order=2, router order=310).
+		if router.GetRoute().MaxStreamDuration == nil && rt != nil &&
+			httpRoute.Traffic != nil &&
+			httpRoute.Traffic.FaultInjection != nil &&
+			httpRoute.Traffic.FaultInjection.Delay != nil {
+			router.GetRoute().MaxStreamDuration = &routev3.RouteAction_MaxStreamDuration{
+				MaxStreamDuration: durationpb.New(rt.Duration),
+			}
+		}
 	}
 
 	// Retries
