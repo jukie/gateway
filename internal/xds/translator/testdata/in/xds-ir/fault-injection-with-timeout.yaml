@@ -1,0 +1,89 @@
+http:
+- name: "first-listener"
+  address: "::"
+  port: 10080
+  path:
+    mergeSlashes: true
+    escapedSlashesAction: UnescapeAndRedirect
+  hostnames:
+  - "*"
+  routes:
+  - name: "fault-delay-exceeds-timeout"
+    hostname: "*"
+    traffic:
+      faultInjection:
+        delay:
+          fixedDelay: 65s
+          percentage: 100
+      timeout:
+        http:
+          requestTimeout: 60s
+    pathMatch:
+      exact: "delay-exceeds-timeout"
+    destination:
+      name: "first-route-dest"
+      settings:
+      - endpoints:
+        - host: "1.2.3.4"
+          port: 50000
+        name: "first-route-dest/backend/0"
+  - name: "fault-delay-under-timeout"
+    hostname: "*"
+    traffic:
+      faultInjection:
+        delay:
+          fixedDelay: 30s
+          percentage: 100
+      timeout:
+        http:
+          requestTimeout: 60s
+    pathMatch:
+      exact: "delay-under-timeout"
+    destination:
+      name: "second-route-dest"
+      settings:
+      - endpoints:
+        - host: "1.2.3.4"
+          port: 50000
+        name: "second-route-dest/backend/0"
+  - name: "fault-abort-with-timeout"
+    hostname: "*"
+    traffic:
+      faultInjection:
+        abort:
+          httpStatus: 500
+          percentage: 100
+      timeout:
+        http:
+          requestTimeout: 60s
+    pathMatch:
+      exact: "abort-with-timeout"
+    destination:
+      name: "third-route-dest"
+      settings:
+      - endpoints:
+        - host: "1.2.3.4"
+          port: 50000
+        name: "third-route-dest/backend/0"
+  - name: "fault-delay-and-abort-with-timeout"
+    hostname: "*"
+    traffic:
+      faultInjection:
+        delay:
+          fixedDelay: 65s
+          percentage: 100
+        abort:
+          httpStatus: 500
+          percentage: 50
+      timeout:
+        http:
+          requestTimeout: 60s
+    pathMatch:
+      exact: "delay-and-abort-with-timeout"
+    destination:
+      name: "fourth-route-dest"
+      settings:
+      - endpoints:
+        - host: "1.2.3.4"
+          port: 50000
+        name: "fourth-route-dest/backend/0"

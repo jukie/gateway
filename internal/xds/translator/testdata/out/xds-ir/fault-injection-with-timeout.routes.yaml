@@ -1,0 +1,80 @@
+- ignorePortInHostMatching: true
+  name: first-listener
+  virtualHosts:
+  - domains:
+    - '*'
+    name: first-listener/*
+    routes:
+    - match:
+        path: delay-exceeds-timeout
+      name: fault-delay-exceeds-timeout
+      route:
+        cluster: first-route-dest
+        idleTimeout: 3600s
+        timeout: 60s
+        upgradeConfigs:
+        - upgradeType: websocket
+      typedPerFilterConfig:
+        envoy.filters.http.fault:
+          '@type': type.googleapis.com/envoy.extensions.filters.http.fault.v3.HTTPFault
+          delay:
+            fixedDelay: 65s
+            percentage:
+              denominator: MILLION
+              numerator: 1000000
+    - match:
+        path: delay-under-timeout
+      name: fault-delay-under-timeout
+      route:
+        cluster: second-route-dest
+        idleTimeout: 3600s
+        timeout: 60s
+        upgradeConfigs:
+        - upgradeType: websocket
+      typedPerFilterConfig:
+        envoy.filters.http.fault:
+          '@type': type.googleapis.com/envoy.extensions.filters.http.fault.v3.HTTPFault
+          delay:
+            fixedDelay: 30s
+            percentage:
+              denominator: MILLION
+              numerator: 1000000
+    - match:
+        path: abort-with-timeout
+      name: fault-abort-with-timeout
+      route:
+        cluster: third-route-dest
+        idleTimeout: 3600s
+        timeout: 60s
+        upgradeConfigs:
+        - upgradeType: websocket
+      typedPerFilterConfig:
+        envoy.filters.http.fault:
+          '@type': type.googleapis.com/envoy.extensions.filters.http.fault.v3.HTTPFault
+          abort:
+            httpStatus: 500
+            percentage:
+              denominator: MILLION
+              numerator: 1000000
+    - match:
+        path: delay-and-abort-with-timeout
+      name: fault-delay-and-abort-with-timeout
+      route:
+        cluster: fourth-route-dest
+        idleTimeout: 3600s
+        timeout: 60s
+        upgradeConfigs:
+        - upgradeType: websocket
+      typedPerFilterConfig:
+        envoy.filters.http.fault:
+          '@type': type.googleapis.com/envoy.extensions.filters.http.fault.v3.HTTPFault
+          abort:
+            httpStatus: 500
+            percentage:
+              denominator: MILLION
+              numerator: 500000
+          delay:
+            fixedDelay: 65s
+            percentage:
+              denominator: MILLION
+              numerator: 1000000
