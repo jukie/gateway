@@ -15,6 +15,7 @@ import (
 
 	perr "github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
@@ -39,15 +40,17 @@ const (
 // GetBTPRoutingTypeForRoute resolves the RoutingType from BackendTrafficPolicies
 // for a specific route and gateway/listener combination.
 // It checks BTPs in priority order:
-// 1. BTPs targeting the specific route (most specific)
-// 2. BTPs targeting the gateway listener
-// 3. BTPs targeting the gateway
+// 1. BTPs targeting the specific route (most specific) — via targetRef/targetRefs or targetSelectors
+// 2. BTPs targeting the gateway listener (via targetRef/targetRefs with sectionName)
+// 3. BTPs targeting the gateway — via targetRef/targetRefs or targetSelectors
 // Returns nil if no BTP with RoutingType targets the route/gateway.
 func GetBTPRoutingTypeForRoute(
 	btps []*egv1a1.BackendTrafficPolicy,
 	routeNN types.NamespacedName,
 	routeKind gwapiv1.Kind,
+	routeLabels map[string]string,
 	gatewayNN types.NamespacedName,
+	gatewayLabels map[string]string,
 	listenerName *gwapiv1.SectionName,
 ) *egv1a1.RoutingType {
 	var gatewayBTPRoutingType *egv1a1.RoutingType
@@ -58,6 +61,7 @@ func GetBTPRoutingTypeForRoute(
 			continue
 		}
 
+		// Check targetRef/targetRefs
 		targetRefs := btp.Spec.GetTargetRefs()
 		for _, ref := range targetRefs {
 			refNamespace := btp.Namespace
@@ -85,6 +89,31 @@ func GetBTPRoutingTypeForRoute(
 					// Gateway-level BTP
 					gatewayBTPRoutingType = btp.Spec.RoutingType
 				}
+			}
+		}
+
+		// Check targetSelectors (label-based targeting)
+		for _, selector := range btp.Spec.TargetSelectors {
+			selectorKind := string(selector.Kind)
+			selectorGroup := string(ptr.Deref(selector.Group, gwapiv1.GroupName))
+			labelSelector := selectorFromTargetSelector(selector)
+
+			// Check if selector targets the route
+			if selectorKind == string(routeKind) &&
+				selectorGroup == string(gwapiv1.GroupName) &&
+				btp.Namespace == routeNN.Namespace &&
+				labelSelector.Matches(labels.Set(routeLabels)) {
+				// Route-level match has highest priority
+				return btp.Spec.RoutingType
+			}
+
+			// Check if selector targets the gateway
+			if selectorKind == resource.KindGateway &&
+				selectorGroup == string(gwapiv1.GroupName) &&
+				btp.Namespace == gatewayNN.Namespace &&
+				labelSelector.Matches(labels.Set(gatewayLabels)) {
+				// Gateway-level (targetSelectors can't specify sectionName)
+				gatewayBTPRoutingType = btp.Spec.RoutingType
 			}
 		}
 	}

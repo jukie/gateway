@@ -1993,7 +1993,9 @@ func (t *Translator) processDestination(name string, backendRefContext BackendRe
 			resources.BackendTrafficPolicies,
 			routeNN,
 			routeType,
+			route.GetLabels(),
 			gatewayNN,
+			gatewayCtx.GetLabels(),
 			parentRef.SectionName,
 		)
 	}
