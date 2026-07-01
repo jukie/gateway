@@ -3108,6 +3108,15 @@ type BackendUtilization struct {
 	MetricNamesForComputingUtilization []string         `json:"metricNamesForComputingUtilization,omitempty" yaml:"metricNamesForComputingUtilization,omitempty"`
 	SlowStart                          *SlowStart       `json:"slowStart,omitempty" yaml:"slowStart,omitempty"`
 	KeepResponseHeaders                *bool            `json:"keepResponseHeaders,omitempty" yaml:"keepResponseHeaders,omitempty"`
+	OOB                                *OOBReporting    `json:"oob,omitempty" yaml:"oob,omitempty"`
+}
+
+// OOBReporting configures out-of-band ORCA load reporting.
+// +k8s:deepcopy-gen=true
+type OOBReporting struct {
+	ReportingPeriod *metav1.Duration `json:"reportingPeriod,omitempty" yaml:"reportingPeriod,omitempty"`
+	Port            *uint32          `json:"port,omitempty" yaml:"port,omitempty"`
+	Authority       *string          `json:"authority,omitempty" yaml:"authority,omitempty"`
 }
 
 // ConsistentHash load balancer settings

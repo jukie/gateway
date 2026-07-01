@@ -229,6 +229,45 @@ type BackendUtilization struct {
 	// +optional
 	// +kubebuilder:default=false
 	KeepResponseHeaders *bool `json:"keepResponseHeaders,omitempty"`
+
+	// OOB enables out-of-band ORCA load reporting. When set, Envoy opens a
+	// server-streaming gRPC connection to each endpoint's
+	// xds.service.orca.v3.OpenRcaService/StreamCoreMetrics and pulls load
+	// reports periodically, instead of relying solely on in-band ORCA metrics
+	// carried in response headers/trailers. In-band metrics (and their header
+	// stripping via KeepResponseHeaders) continue to work alongside OOB.
+	//
+	// The backend must implement OpenRcaService for this to take effect.
+	// An empty block ({}) enables OOB with Envoy's defaults.
+	// +optional
+	OOB *OOBReporting `json:"oob,omitempty"`
+}
+
+// OOBReporting configures out-of-band ORCA load reporting for the
+// BackendUtilization load balancer. The presence of this block enables OOB
+// reporting (Envoy's enable_oob_load_report).
+type OOBReporting struct {
+	// ReportingPeriod is how often Envoy requests load reports from the server.
+	// The server may report less frequently than requested. Defaults to Envoy's
+	// default of 10s.
+	// +optional
+	ReportingPeriod *gwapiv1.Duration `json:"reportingPeriod,omitempty"`
+
+	// Port overrides the port used for the OOB reporting connection, e.g. to
+	// reach a separate reporting sidecar. Defaults to the endpoint's port.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +optional
+	Port *uint32 `json:"port,omitempty"`
+
+	// Authority overrides the :authority header on the OOB gRPC stream.
+	// Must not contain NUL, CR, or LF characters (matching Envoy's constraint on
+	// the OrcaOobReportingConfig authority field), which also guards against
+	// header injection.
+	//
+	// +kubebuilder:validation:Pattern=`^[^\x00\n\r]*$`
+	// +optional
+	Authority *string `json:"authority,omitempty"`
 }
 
 // DynamicModuleLBPolicy configures a custom load balancing algorithm

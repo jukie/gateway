@@ -21,6 +21,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	"github.com/envoyproxy/gateway/internal/ir"
@@ -565,4 +566,114 @@ func TestGetHealthCheckOverridesHostname(t *testing.T) {
 			require.Equal(t, tc.expected, result)
 		})
 	}
+}
+
+func TestBuildClusterWithBackendUtilizationOOB(t *testing.T) {
+	args := &xdsClusterArgs{
+		name:         "test-cluster-bu-oob",
+		endpointType: EndpointTypeStatic,
+		settings: []*ir.DestinationSetting{{
+			Endpoints: []*ir.DestinationEndpoint{{Host: "127.0.0.1", Port: 8080}},
+		}},
+		loadBalancer: &ir.LoadBalancer{BackendUtilization: &ir.BackendUtilization{
+			OOB: &ir.OOBReporting{
+				ReportingPeriod: ir.MetaV1DurationPtr(5 * time.Second),
+				Port:            ptr.To(uint32(9001)),
+				Authority:       ptr.To("orca.local"),
+			},
+		}},
+	}
+
+	result, err := buildXdsCluster(args)
+	require.NoError(t, err)
+	policy := result.cluster.LoadBalancingPolicy.Policies[0]
+	require.Equal(t, "envoy.load_balancing_policies.client_side_weighted_round_robin", policy.TypedExtensionConfig.Name)
+
+	cswrr := &cswrrv3.ClientSideWeightedRoundRobin{}
+	err = policy.TypedExtensionConfig.TypedConfig.UnmarshalTo(cswrr)
+	require.NoError(t, err)
+
+	require.NotNil(t, cswrr.EnableOobLoadReport)
+	require.True(t, cswrr.EnableOobLoadReport.GetValue())
+	require.NotNil(t, cswrr.OobReportingPeriod)
+	require.Equal(t, 5*time.Second, cswrr.OobReportingPeriod.AsDuration())
+	require.NotNil(t, cswrr.OobReportingConfig)
+	require.EqualValues(t, 9001, cswrr.OobReportingConfig.PortValue)
+	require.Equal(t, "orca.local", cswrr.OobReportingConfig.Authority)
+}
+
+func TestBuildClusterWithBackendUtilizationOOBEmpty(t *testing.T) {
+	args := &xdsClusterArgs{
+		name:         "test-cluster-bu-oob-empty",
+		endpointType: EndpointTypeStatic,
+		settings: []*ir.DestinationSetting{{
+			Endpoints: []*ir.DestinationEndpoint{{Host: "127.0.0.1", Port: 8080}},
+		}},
+		loadBalancer: &ir.LoadBalancer{BackendUtilization: &ir.BackendUtilization{
+			OOB: &ir.OOBReporting{},
+		}},
+	}
+
+	result, err := buildXdsCluster(args)
+	require.NoError(t, err)
+	policy := result.cluster.LoadBalancingPolicy.Policies[0]
+	cswrr := &cswrrv3.ClientSideWeightedRoundRobin{}
+	err = policy.TypedExtensionConfig.TypedConfig.UnmarshalTo(cswrr)
+	require.NoError(t, err)
+
+	require.NotNil(t, cswrr.EnableOobLoadReport)
+	require.True(t, cswrr.EnableOobLoadReport.GetValue())
+	require.Nil(t, cswrr.OobReportingPeriod)
+	require.Nil(t, cswrr.OobReportingConfig)
+}
+
+func TestBuildClusterWithBackendUtilizationOOBWeightedZones(t *testing.T) {
+	args := &xdsClusterArgs{
+		name:         "test-cluster-bu-oob-wz",
+		endpointType: EndpointTypeStatic,
+		settings: []*ir.DestinationSetting{{
+			Endpoints: []*ir.DestinationEndpoint{
+				{Host: "127.0.0.1", Port: 8080, Zone: new("us-east-1a")},
+				{Host: "127.0.0.2", Port: 8080, Zone: new("us-east-1b")},
+			},
+		}},
+		loadBalancer: &ir.LoadBalancer{
+			BackendUtilization: &ir.BackendUtilization{
+				OOB: &ir.OOBReporting{
+					ReportingPeriod: ir.MetaV1DurationPtr(5 * time.Second),
+					Port:            ptr.To(uint32(9001)),
+					Authority:       ptr.To("orca.local"),
+				},
+			},
+			WeightedZones: []ir.WeightedZoneConfig{
+				{Zone: "us-east-1a", Weight: 80},
+				{Zone: "us-east-1b", Weight: 20},
+			},
+		},
+	}
+
+	result, err := buildXdsCluster(args)
+	require.NoError(t, err)
+
+	// The top-level policy is wrr_locality; OOB config must survive the wrap.
+	policy := result.cluster.LoadBalancingPolicy.Policies[0]
+	require.Equal(t, "envoy.load_balancing_policies.wrr_locality", policy.TypedExtensionConfig.Name)
+
+	wrrLocality := &wrr_localityv3.WrrLocality{}
+	err = policy.TypedExtensionConfig.TypedConfig.UnmarshalTo(wrrLocality)
+	require.NoError(t, err)
+	childPolicy := wrrLocality.EndpointPickingPolicy.Policies[0]
+	require.Equal(t, "envoy.load_balancing_policies.client_side_weighted_round_robin", childPolicy.TypedExtensionConfig.Name)
+
+	cswrr := &cswrrv3.ClientSideWeightedRoundRobin{}
+	err = childPolicy.TypedExtensionConfig.TypedConfig.UnmarshalTo(cswrr)
+	require.NoError(t, err)
+
+	require.NotNil(t, cswrr.EnableOobLoadReport)
+	require.True(t, cswrr.EnableOobLoadReport.GetValue())
+	require.NotNil(t, cswrr.OobReportingPeriod)
+	require.Equal(t, 5*time.Second, cswrr.OobReportingPeriod.AsDuration())
+	require.NotNil(t, cswrr.OobReportingConfig)
+	require.EqualValues(t, 9001, cswrr.OobReportingConfig.PortValue)
+	require.Equal(t, "orca.local", cswrr.OobReportingConfig.Authority)
 }

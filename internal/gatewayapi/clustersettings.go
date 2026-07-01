@@ -391,6 +391,21 @@ func buildLoadBalancer(policy *egv1a1.ClusterSettings) (*ir.LoadBalancer, error)
 				lb.BackendUtilization.MetricNamesForComputingUtilization = append([]string(nil), backendUtilization.MetricNamesForComputingUtilization...)
 			}
 			lb.BackendUtilization.KeepResponseHeaders = new(ptr.Deref(backendUtilization.KeepResponseHeaders, false))
+
+			if backendUtilization.OOB != nil {
+				oob := &ir.OOBReporting{
+					Port:      backendUtilization.OOB.Port,
+					Authority: backendUtilization.OOB.Authority,
+				}
+				if backendUtilization.OOB.ReportingPeriod != nil {
+					d, err := time.ParseDuration(string(*backendUtilization.OOB.ReportingPeriod))
+					if err != nil {
+						return nil, fmt.Errorf("invalid OOB ReportingPeriod value %s: %w", *backendUtilization.OOB.ReportingPeriod, err)
+					}
+					oob.ReportingPeriod = ir.MetaV1DurationPtr(d)
+				}
+				lb.BackendUtilization.OOB = oob
+			}
 		}
 		if policy.LoadBalancer.SlowStart != nil && policy.LoadBalancer.SlowStart.Window != nil {
 			d, err := time.ParseDuration(string(*policy.LoadBalancer.SlowStart.Window))

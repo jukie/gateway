@@ -1627,6 +1627,22 @@ func buildBackendUtilizationLoadBalancingPolicy(loadBalancer *ir.LoadBalancer) (
 	if len(v.MetricNamesForComputingUtilization) > 0 {
 		cswrr.MetricNamesForComputingUtilization = append([]string(nil), v.MetricNamesForComputingUtilization...)
 	}
+	if v.OOB != nil {
+		cswrr.EnableOobLoadReport = wrapperspb.Bool(true)
+		if v.OOB.ReportingPeriod != nil && v.OOB.ReportingPeriod.Duration > 0 {
+			cswrr.OobReportingPeriod = durationpb.New(v.OOB.ReportingPeriod.Duration)
+		}
+		if v.OOB.Port != nil || v.OOB.Authority != nil {
+			cfg := &commonv3.OrcaOobReportingConfig{}
+			if v.OOB.Port != nil {
+				cfg.PortValue = *v.OOB.Port
+			}
+			if v.OOB.Authority != nil {
+				cfg.Authority = *v.OOB.Authority
+			}
+			cswrr.OobReportingConfig = cfg
+		}
+	}
 	typedCSWRR, err := proto.ToAnyWithValidation(cswrr)
 	if err != nil {
 		return nil, err

@@ -309,6 +309,7 @@ import (
 	_ "github.com/envoyproxy/go-control-plane/envoy/extensions/network/dns_resolver/cares/v3"
 	_ "github.com/envoyproxy/go-control-plane/envoy/extensions/network/dns_resolver/getaddrinfo/v3"
 	_ "github.com/envoyproxy/go-control-plane/envoy/extensions/network/dns_resolver/hickory/v3"
+	_ "github.com/envoyproxy/go-control-plane/envoy/extensions/network/socket_interface/sockmap/v3"
 	_ "github.com/envoyproxy/go-control-plane/envoy/extensions/network/socket_interface/v3"
 	_ "github.com/envoyproxy/go-control-plane/envoy/extensions/outlier_detection_monitors/common/v3"
 	_ "github.com/envoyproxy/go-control-plane/envoy/extensions/outlier_detection_monitors/consecutive_errors/v3"
